@@ -1,0 +1,46 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.5
+version = '1.0'
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Simple parser for Cron-Compiler Application',
+                   'Implementation-Version': version,
+                   'Main-Class': 'org.cron.parser.CronGen'
+
+    }
+}
+
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'repos'
+       }
+    }
+}
+
+repositories {
+    mavenCentral()
+    flatDir {
+       dirs 'lib'
+    }
+}
+
+dependencies {
+}
+
+task onejar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Jar File Example',
+            'Implementation-Version': version,
+            'Main-Class': 'org.cron.parser.CronGen'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+
+task grammer(type:Exec) { 
+  commandLine = ['java', '-jar', 'lib/antlr-4.5.1-complete.jar', '/home/vagrant/www/work/parser-cron/src/main/Cron.g4', '-visitor', '-package', 'org.cron']  
+} 
