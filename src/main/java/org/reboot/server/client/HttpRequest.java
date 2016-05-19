@@ -1,4 +1,4 @@
-package org.reboot.server.entity;
+package org.reboot.server.client;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -11,12 +11,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class Packet {
-    private static Logger log = LoggerFactory.getLogger(Packet.class);
+public class HttpRequest {
+    private static Logger log = LoggerFactory.getLogger(HttpRequest.class);
 
     public enum Method {
         GET,
         POST,
+        PUT,
         PATCH,
         DELETE
     }
@@ -39,7 +40,7 @@ public class Packet {
         return this.headers;
     }
 
-    public Packet(BufferedReader in) throws Exception {
+    public HttpRequest(BufferedReader in) throws Exception {
         String firstLine = in.readLine();
         parseHeader(firstLine);
 

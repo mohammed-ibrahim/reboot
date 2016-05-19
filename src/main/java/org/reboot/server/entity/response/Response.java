@@ -13,13 +13,18 @@ import java.util.*;
 
 import org.reboot.server.util.*;
 
-public class Ok {
+public class Response {
 
-    public static String rs200(String body) {
+    public static String _200(String body) {
         return String.format(Util.R200, String.valueOf(body.length()) ,body);
     }
 
-    public static String rs201() {
+    public static String _201() {
         return Util.R201;
+    }
+
+    public static String _500() {
+        String body = "Internal Server Error";
+        return String.format(Util.R500, String.valueOf(body.length()) ,body); 
     }
 }

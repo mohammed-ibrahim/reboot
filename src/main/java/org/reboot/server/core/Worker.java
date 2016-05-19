@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import org.reboot.server.entity.*;
 import org.reboot.server.entity.response.*;
+import org.reboot.server.client.*;
 
 class Worker implements Runnable {
 
@@ -29,15 +30,18 @@ class Worker implements Runnable {
             in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
             log.info("Processing the request...");
-            Packet pr = new Packet(in);
+            HttpRequest request = new HttpRequest(in);
 
-            log.info(pr.getMethod().toString());
-            log.info(pr.getResource());
-            log.info(pr.getHeaders().toString());
-            String packet = Ok.rs200("hello world");
+            log.info(request.getMethod().toString());
+            log.info(request.getResource());
+            log.info(request.getHeaders().toString());
+
+            String packet = Response._200("hello world");
+            packet = Response._500();
             log.info("Sending: " + packet);
             out.write(packet);
         } catch (Exception e) {
+            try { out.write(Response._500()); } catch (Exception ie) { log.error(ie.getMessage()); }
             log.error(e.getMessage());
         } finally {
             try { out.close(); } catch (Exception e) { log.error(e.getMessage()); }

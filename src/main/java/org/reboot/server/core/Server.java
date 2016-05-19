@@ -6,6 +6,10 @@ import java.io.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 
+import java.util.*;
+
+import org.reboot.server.client.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,11 +22,14 @@ class Server {
     private ExecutorService executorService = null;
 
     private static Logger log = LoggerFactory.getLogger(Server.class);
+
+    private List<Route> routes = new ArrayList<Route>();
     
-    public Server(int port, int numOfThreads) {
+    public Server(int port, int numOfThreads, List<Route> routes) {
         this.port = port;
         this.keepRunning = true;
         this.executorService = Executors.newFixedThreadPool(numOfThreads);
+        this.routes = routes;
     }
 
     public void startServer() {
