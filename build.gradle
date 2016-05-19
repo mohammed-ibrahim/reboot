@@ -27,13 +27,15 @@ repositories {
 }
 
 dependencies {
+    compile 'ch.qos.logback:logback-classic:1.1.3'
+    compile 'org.slf4j:jcl-over-slf4j:1.7.13'
 }
 
 task onejar(type: Jar) {
     manifest {
         attributes 'Implementation-Title': 'Gradle Jar File Example',
             'Implementation-Version': version,
-            'Main-Class': 'org.cron.parser.CronGen'
+            'Main-Class': 'org.reboot.server.core.Main'
     }
     baseName = project.name + '-all'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
