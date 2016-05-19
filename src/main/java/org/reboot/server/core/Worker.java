@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.reboot.server.entity.*;
+import org.reboot.server.entity.response.*;
 
 class Worker implements Runnable {
 
@@ -33,11 +34,12 @@ class Worker implements Runnable {
             log.info(pr.getMethod().toString());
             log.info(pr.getResource());
             log.info(pr.getHeaders().toString());
+            out.write((new Ok()).generatePacket());
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
-            try { in.close(); } catch (Exception e) { }
             try { out.close(); } catch (Exception e) { }
+            try { in.close(); } catch (Exception e) { }
         }
     }
 }

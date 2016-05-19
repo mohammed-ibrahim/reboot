@@ -6,6 +6,7 @@ import java.io.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 
-class Util {
+public class Util {
 
+    public static String textOk = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\nasdf";
 }
