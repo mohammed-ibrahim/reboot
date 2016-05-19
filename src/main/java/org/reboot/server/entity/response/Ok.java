@@ -15,7 +15,11 @@ import org.reboot.server.util.*;
 
 public class Ok {
 
-    public String generatePacket() {
-        return Util.textOk;
+    public static String rs200(String body) {
+        return String.format(Util.R200, String.valueOf(body.length()) ,body);
+    }
+
+    public static String rs201() {
+        return Util.R201;
     }
 }

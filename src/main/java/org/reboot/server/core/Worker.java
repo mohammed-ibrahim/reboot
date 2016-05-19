@@ -34,12 +34,15 @@ class Worker implements Runnable {
             log.info(pr.getMethod().toString());
             log.info(pr.getResource());
             log.info(pr.getHeaders().toString());
-            out.write((new Ok()).generatePacket());
+            String packet = Ok.rs200("hello world");
+            log.info("Sending: " + packet);
+            out.write(packet);
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
-            try { out.close(); } catch (Exception e) { }
-            try { in.close(); } catch (Exception e) { }
+            try { out.close(); } catch (Exception e) { log.error(e.getMessage()); }
+            try { in.close(); } catch (Exception e) { log.error(e.getMessage()); }
+            try { this.socket.close(); } catch (Exception e) { log.error(e.getMessage()); }
         }
     }
 }
