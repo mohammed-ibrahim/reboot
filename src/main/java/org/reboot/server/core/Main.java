@@ -14,7 +14,7 @@ class Main {
         List<Route> routes = new ArrayList<Route>();
         routes.add(new Route("/health", new TestController())); 
 
-        Server server = new Server(9899, 5, routes);
+        Server server = new Server(9899, 5, 2000, 2000, routes);
         server.startServer();
     }
 }

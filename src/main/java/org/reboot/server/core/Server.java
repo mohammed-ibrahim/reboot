@@ -17,6 +17,10 @@ class Server {
 
     private int port = 0;
 
+    private int requestTimeOut = 2000;
+
+    private int responseTimeOut = 2000;
+
     private boolean keepRunning = true;
 
     private ExecutorService executorService = null;
@@ -25,8 +29,10 @@ class Server {
 
     private List<Route> routes = new ArrayList<Route>();
     
-    public Server(int port, int numOfThreads, List<Route> routes) {
+    public Server(int port, int numOfThreads, int requestTimeOut, int responseTimeOut, List<Route> routes) {
         this.port = port;
+        this.requestTimeOut = requestTimeOut;
+        this.responseTimeOut = responseTimeOut;
         this.keepRunning = true;
         this.executorService = Executors.newFixedThreadPool(numOfThreads);
         this.routes = routes;
@@ -47,7 +53,7 @@ class Server {
             log.info("Waiting for client...");
             Socket socket = server.accept();
             log.info("Got a new request...");
-            this.executorService.submit(new Worker(socket));
+            this.executorService.submit(new Worker(socket, this.requestTimeOut, this.responseTimeOut));
         }
     }
 

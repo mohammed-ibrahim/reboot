@@ -17,9 +17,9 @@ public class HttpResponse {
         HTTP_500
     }
 
-    private Status status;
+    private Status status = null;
 
-    private String body;
+    private String body = null;
 
     public Status getStatus() {
         return this.status;
