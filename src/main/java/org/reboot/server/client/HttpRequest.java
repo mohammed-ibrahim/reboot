@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.reboot.server.util.*;
 
 import java.util.*;
 
@@ -22,13 +23,22 @@ public class HttpRequest {
         DELETE
     }
 
+    public static Set<String> methodsWithBody = new HashSet<String>();
+
+    static {
+        methodsWithBody.add("POST");
+        methodsWithBody.add("PUT");
+        methodsWithBody.add("PATCH");
+        methodsWithBody.add("DELETE");
+    }
+
     private Method method;
 
     private String resource = "";
 
     private Map<String, String> headers = new HashMap<String, String>();
 
-    private String body = null;
+    private String body = "";
 
     public Method getMethod() {
         return this.method;
@@ -52,10 +62,20 @@ public class HttpRequest {
 
         String line = in.readLine();
         while (!line.isEmpty()) {
-            String[] split = line.split(":");
+            String[] split = line.split(": ");
             headers.put(split[0], split[1]);
 
             line = in.readLine();
+        }
+
+        if (methodsWithBody.contains(this.method.toString())) {
+            if (headers.keySet().contains(Util.contentLength)) {
+                Integer contentLength = Integer.parseInt(headers.get(Util.contentLength));
+                char[] content = new char[contentLength];
+
+                in.read(content, 0, contentLength);
+                this.body = new String(content);
+            }
         }
     }
 

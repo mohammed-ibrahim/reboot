@@ -47,6 +47,7 @@ class Worker implements Runnable {
             log.info(request.getMethod().toString());
             log.info(request.getResource());
             log.info(request.getHeaders().toString());
+            log.info(request.getBody());
 
             Future <HttpResponse> resp = RequestProcessor.submit(new TestController(), request);
             HttpResponse result = getResponse(resp);

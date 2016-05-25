@@ -9,7 +9,7 @@ import org.reboot.server.client.*;
 class Main {
     public static void main(String []args) {
         Logger log = LoggerFactory.getLogger(Main.class);
-        log.info("hello world");
+        log.info("Booting up....");
 
         List<Route> routes = new ArrayList<Route>();
         routes.add(new Route("/health", new TestController())); 

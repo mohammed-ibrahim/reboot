@@ -17,4 +17,6 @@ public class Util {
     public static String R400 = "HTTP/1.1 400 BadRequest\r\nContent-Length: %s\r\n\r\n%s";
 
     public static String R401 = "HTTP/1.1 401 Unauthorized\r\nContent-Length: %s\r\n\r\n%s";
+
+    public static final String contentLength = "Content-Length";
 }
