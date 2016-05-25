@@ -46,14 +46,11 @@ class Worker implements Runnable {
             log.info(request.getHeaders().toString());
 
             Future <HttpResponse> resp = RequestProcessor.submit(new TestController(), request);
-            /*
-            String packet = Response._200("hello world");
-            packet = Response._500();
-            log.info("Sending: " + packet);
-            out.write(packet);
-            */
+            HttpResponse result = getResponse(resp);
+            //log.info("Writing ouput: " + result.getText());
+            out.write(result.getText());
         } catch (Exception e) {
-            try { out.write(Response._500()); } catch (Exception ie) { log.error(ie.getMessage()); }
+            try { out.write(HttpResponse.INTERNAL_SERVER_ERROR.getText()); } catch (Exception ie) { log.error(ie.getMessage()); }
             log.error(e.getMessage());
         } finally {
             try { out.close(); } catch (Exception e) { log.error(e.getMessage()); }
@@ -67,10 +64,9 @@ class Worker implements Runnable {
             return future.get(this.responseTimeOut, TimeUnit.MILLISECONDS);
         //TODO: implement timeout exception
         } catch (Exception e) {
-
             //TODO: Left at this part
-
-            return null;
+            //TODO: Put right response server time out variable here
+            return HttpResponse.INTERNAL_SERVER_ERROR;
         } 
     }
 }

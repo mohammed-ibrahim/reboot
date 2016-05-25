@@ -8,9 +8,10 @@ import java.util.concurrent.ExecutorService;
 
 import org.reboot.server.entity.*;
 
-public class TestController implements Controller {
+public class TimeConsumingController implements Controller {
     public HttpResponse process(HttpRequest request) {
-
-       return new HttpResponse(HttpResponse.HTTP_200, "Hello world");
+        
+        try { Thread.sleep(2500); } catch (Exception e) {  }
+        return new HttpResponse(HttpResponse.HTTP_200, "Hello world");
     }
 }
