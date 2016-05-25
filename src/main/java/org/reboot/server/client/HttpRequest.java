@@ -28,6 +28,8 @@ public class HttpRequest {
 
     private Map<String, String> headers = new HashMap<String, String>();
 
+    private String body = null;
+
     public Method getMethod() {
         return this.method;
     }
@@ -38,6 +40,10 @@ public class HttpRequest {
 
     public Map<String, String> getHeaders() {
         return this.headers;
+    }
+
+    public String getBody() {
+        return this.body;
     }
 
     public HttpRequest(BufferedReader in) throws Exception {

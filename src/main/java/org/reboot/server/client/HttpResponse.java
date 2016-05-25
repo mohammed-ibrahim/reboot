@@ -13,6 +13,8 @@ public class HttpResponse {
 
     public static final HttpResponse INTERNAL_SERVER_ERROR = new HttpResponse(500, "Internal Server Error");
 
+    public static final HttpResponse REQUEST_TIMEOUT = new HttpResponse(408, "Request Timeout");
+
     private static Map<Integer, String> headerMapping = new HashMap<Integer, String>();
 
     private static Set<Integer> requestsWithBody = new HashSet<Integer>();
@@ -25,6 +27,7 @@ public class HttpResponse {
         headerMapping.put(new Integer(400), "BadRequest");
         headerMapping.put(new Integer(401), "Unauthorized");
         headerMapping.put(new Integer(404), "Not Found");
+        headerMapping.put(new Integer(408), "Request Timeout");
         headerMapping.put(new Integer(500), "Internal Server Error");
 
         requestsWithBody.add(new Integer(200));
@@ -32,6 +35,7 @@ public class HttpResponse {
         requestsWithBody.add(new Integer(400));
         requestsWithBody.add(new Integer(401));
         requestsWithBody.add(new Integer(404));
+        requestsWithBody.add(new Integer(408));
         requestsWithBody.add(new Integer(500));
     }
 

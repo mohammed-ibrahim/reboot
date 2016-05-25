@@ -16,6 +16,8 @@ import org.reboot.server.client.*;
 
 import java.util.concurrent.TimeUnit;
 
+import java.net.SocketTimeoutException;
+
 class Worker implements Runnable {
 
     private Socket socket = null;
@@ -29,6 +31,7 @@ class Worker implements Runnable {
     public Worker(Socket socket, Integer requestTimeOut, Integer responseTimeOut) {
         this.socket = socket;
         this.requestTimeOut = requestTimeOut;
+        try { this.socket.setSoTimeout(this.requestTimeOut); } catch (Exception e) { log.error(e.getMessage()); }
         this.responseTimeOut = responseTimeOut;
     }
 
@@ -49,6 +52,9 @@ class Worker implements Runnable {
             HttpResponse result = getResponse(resp);
             //log.info("Writing ouput: " + result.getText());
             out.write(result.getText());
+        } catch (SocketTimeoutException sto) {
+            try { out.write(HttpResponse.REQUEST_TIMEOUT.getText()); } catch (Exception ie) { log.error(ie.getMessage()); }
+            log.error(sto.getMessage());
         } catch (Exception e) {
             try { out.write(HttpResponse.INTERNAL_SERVER_ERROR.getText()); } catch (Exception ie) { log.error(ie.getMessage()); }
             log.error(e.getMessage());
