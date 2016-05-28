@@ -54,7 +54,7 @@ class Server {
             log.info("Waiting for client...");
             Socket socket = server.accept();
             log.info("Got a new request...");
-            this.executorService.submit(new Worker(socket, this.requestTimeOut, this.responseTimeOut));
+            this.executorService.submit(new Worker(socket, this.requestTimeOut, this.responseTimeOut, this.routes));
         }
     }
 

@@ -15,6 +15,10 @@ public class HttpResponse {
 
     public static final HttpResponse REQUEST_TIMEOUT = new HttpResponse(408, "Request Timeout");
 
+    public static final HttpResponse METHOD_NOT_ALLOWED = new HttpResponse(405, "Method not allowed");
+
+    public static final HttpResponse SERVER_TIME_OUT = new HttpResponse(524, "Server Time Out");
+
     private static Map<Integer, String> headerMapping = new HashMap<Integer, String>();
 
     private static Set<Integer> requestsWithBody = new HashSet<Integer>();
@@ -27,16 +31,20 @@ public class HttpResponse {
         headerMapping.put(new Integer(400), "BadRequest");
         headerMapping.put(new Integer(401), "Unauthorized");
         headerMapping.put(new Integer(404), "Not Found");
+        headerMapping.put(new Integer(405), "Method not allowed");
         headerMapping.put(new Integer(408), "Request Timeout");
         headerMapping.put(new Integer(500), "Internal Server Error");
+        headerMapping.put(new Integer(524), "Server Time Out");
 
         requestsWithBody.add(new Integer(200));
         requestsWithBody.add(new Integer(201));
         requestsWithBody.add(new Integer(400));
         requestsWithBody.add(new Integer(401));
         requestsWithBody.add(new Integer(404));
+        requestsWithBody.add(new Integer(405));
         requestsWithBody.add(new Integer(408));
         requestsWithBody.add(new Integer(500));
+        requestsWithBody.add(new Integer(524));
     }
 
     private Integer status = null;

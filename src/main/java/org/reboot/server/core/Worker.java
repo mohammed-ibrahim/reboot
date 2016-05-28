@@ -11,7 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.reboot.server.client.*;
+import java.util.*;
 
+import org.reboot.server.route.*;
 import java.util.concurrent.TimeUnit;
 
 import java.net.SocketTimeoutException;
@@ -26,11 +28,14 @@ class Worker implements Runnable {
 
     private Integer responseTimeOut = null;
 
-    public Worker(Socket socket, Integer requestTimeOut, Integer responseTimeOut) {
+    private List<Route> routes = new ArrayList<Route>();
+
+    public Worker(Socket socket, Integer requestTimeOut, Integer responseTimeOut, List<Route> routes) {
         this.socket = socket;
         this.requestTimeOut = requestTimeOut;
         try { this.socket.setSoTimeout(this.requestTimeOut); } catch (Exception e) { log.error(e.getMessage()); }
         this.responseTimeOut = responseTimeOut;
+        this.routes = routes;
     }
 
     public void run() {
@@ -47,12 +52,19 @@ class Worker implements Runnable {
             log.info(request.getHeaders().toString());
             log.info(request.getBody());
 
-            Future <HttpResponse> resp = RequestProcessor.submit(new TestController(), request);
+            log.info("Obtaining controller...");
+            Controller controller = getController(request);
+            log.info("Controller fetched successfully...");
+
+            Future <HttpResponse> resp = RequestProcessor.submit(controller, request);
             HttpResponse result = getResponse(resp);
             //log.info("Writing ouput: " + result.getText());
             out.write(result.getText());
         } catch (SocketTimeoutException sto) {
             try { out.write(HttpResponse.REQUEST_TIMEOUT.getText()); } catch (Exception ie) { log.error(ie.getMessage()); }
+            log.error(sto.getMessage());
+        } catch (MethodNotAllowedException sto) {
+            try { out.write(HttpResponse.METHOD_NOT_ALLOWED.getText()); } catch (Exception ie) { log.error(ie.getMessage()); }
             log.error(sto.getMessage());
         } catch (Exception e) {
             try { out.write(HttpResponse.INTERNAL_SERVER_ERROR.getText()); } catch (Exception ie) { log.error(ie.getMessage()); }
@@ -64,6 +76,26 @@ class Worker implements Runnable {
         }
     }
 
+    private Controller getController(HttpRequest request) {
+        Route route = new Route(request.getResource(), request.getMethod(), null);
+        Route availableRoute = null;
+
+        if (route != null) {
+            log.info("Searching for route...");
+            availableRoute = RouteMatcher.getRoute(this.routes, route);
+
+            if (availableRoute == null) {
+               throw new MethodNotAllowedException();
+            }
+        }
+
+        try { 
+            return (Controller) availableRoute.getKlass().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Controller not found");
+        }
+    }
+
     private HttpResponse getResponse(Future <HttpResponse> future) {
         try {
             return future.get(this.responseTimeOut, TimeUnit.MILLISECONDS);
@@ -71,7 +103,7 @@ class Worker implements Runnable {
         } catch (Exception e) {
             //TODO: Left at this part
             //TODO: Put right response server time out variable here
-            return HttpResponse.INTERNAL_SERVER_ERROR;
+            return HttpResponse.SERVER_TIME_OUT;
         } 
     }
 }
