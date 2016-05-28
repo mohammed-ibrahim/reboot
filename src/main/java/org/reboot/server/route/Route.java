@@ -11,22 +11,6 @@ public class Route {
 
     private Class klass;
 
-    public Route(String route, Method method, Class klass) {
-
-        List<String> segmentList = Arrays.asList(route.split("/"));
-        List<Segment> formattedSegments = new ArrayList<Segment>();
-
-        for (String segmentPath: segmentList) {
-            if (segmentPath.length() > 0) {
-                formattedSegments.add(new Segment(segmentPath));
-            }
-        }
-
-        this.segments = formattedSegments;
-        this.method = method;
-        this.klass = klass;
-    }
-
     public List<Segment> getSegments() {
         return this.segments;
     }
@@ -51,7 +35,23 @@ public class Route {
         this.klass = klass;
     }
 
+    public Route(String route, Method method, Class klass) {
+
+        List<String> segmentList = Arrays.asList(route.split("/"));
+        List<Segment> formattedSegments = new ArrayList<Segment>();
+
+        for (String segmentPath: segmentList) {
+            if (segmentPath.length() > 0) {
+                formattedSegments.add(new Segment(segmentPath));
+            }
+        }
+
+        this.segments = formattedSegments;
+        this.method = method;
+        this.klass = klass;
+    }
+
     public String toString() {
-        return this.method.toString() + ":" + this.segments.toString();
+        return this.method.toString() + ":" + this.segments.toString() + ":" + this.klass.toString();
     }
 }

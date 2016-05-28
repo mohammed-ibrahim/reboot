@@ -16,6 +16,9 @@ import java.util.*;
 import org.reboot.server.route.*;
 import java.util.concurrent.TimeUnit;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import java.net.SocketTimeoutException;
 
 class Worker implements Runnable {
@@ -47,14 +50,12 @@ class Worker implements Runnable {
             log.info("Processing the request...");
             HttpRequest request = new HttpRequest(in);
 
-            log.info(request.getMethod().toString());
-            log.info(request.getResource());
-            log.info(request.getHeaders().toString());
-            log.info(request.getBody());
 
             log.info("Obtaining controller...");
             Controller controller = getController(request);
             log.info("Controller fetched successfully...");
+
+            log.info(request.toString());
 
             Future <HttpResponse> resp = RequestProcessor.submit(controller, request);
             HttpResponse result = getResponse(resp);
@@ -78,19 +79,20 @@ class Worker implements Runnable {
 
     private Controller getController(HttpRequest request) {
         Route route = new Route(request.getResource(), request.getMethod(), null);
-        Route availableRoute = null;
+        MatchedRoute matchedRoute = null;
 
         if (route != null) {
-            log.info("Searching for route...");
-            availableRoute = RouteMatcher.getRoute(this.routes, route);
+            //log.info("Searching for route...");
+            matchedRoute = RouteMatcher.getRoute(this.routes, route);
 
-            if (availableRoute == null) {
+            if (matchedRoute == null) {
                throw new MethodNotAllowedException();
             }
         }
 
         try { 
-            return (Controller) availableRoute.getKlass().newInstance();
+            request.setPathVariables(matchedRoute.getPathVariables());
+            return (Controller) matchedRoute.getAvailableRoute().getKlass().newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Controller not found");
         }
@@ -99,11 +101,10 @@ class Worker implements Runnable {
     private HttpResponse getResponse(Future <HttpResponse> future) {
         try {
             return future.get(this.responseTimeOut, TimeUnit.MILLISECONDS);
-        //TODO: implement timeout exception
-        } catch (Exception e) {
-            //TODO: Left at this part
-            //TODO: Put right response server time out variable here
+        } catch (TimeoutException e) {
             return HttpResponse.SERVER_TIME_OUT;
-        } 
+        } catch (Exception e) {
+            return HttpResponse.INTERNAL_SERVER_ERROR;
+        }
     }
 }
