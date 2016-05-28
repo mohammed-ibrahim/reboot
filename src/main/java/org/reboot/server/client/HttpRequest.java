@@ -15,14 +15,6 @@ import java.util.*;
 public class HttpRequest {
     private static Logger log = LoggerFactory.getLogger(HttpRequest.class);
 
-    public enum Method {
-        GET,
-        POST,
-        PUT,
-        PATCH,
-        DELETE
-    }
-
     public static Set<String> methodsWithBody = new HashSet<String>();
 
     static {

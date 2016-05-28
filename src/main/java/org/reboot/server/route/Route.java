@@ -1,12 +1,15 @@
 package org.reboot.server.route;
 
+import org.reboot.server.client.*;
 import java.util.*;
 
 public class Route {
 
     private List<Segment> segments;
 
-    public Route(String route) {
+    private Method method;
+
+    public Route(String route, Method method) {
 
         List<String> segmentList = Arrays.asList(route.split("/"));
         List<Segment> formattedSegments = new ArrayList<Segment>();
@@ -18,6 +21,7 @@ public class Route {
         }
 
         this.segments = formattedSegments;
+        this.method = method;
     }
 
     public List<Segment> getSegments() {
@@ -26,5 +30,17 @@ public class Route {
 
     public void setSegments(List<Segment> segments) {
         this.segments = segments;
+    }
+
+    public Method getMethod() {
+        return this.method;
+    }
+
+    public void setMethod(Method method) {
+        this.method = method;
+    }
+
+    public String toString() {
+        return this.method.toString() + ":" + this.segments.toString();
     }
 }

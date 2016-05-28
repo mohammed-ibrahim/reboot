@@ -10,8 +10,6 @@ import java.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.reboot.server.entity.*;
-import org.reboot.server.entity.response.*;
 import org.reboot.server.client.*;
 
 import java.util.concurrent.TimeUnit;

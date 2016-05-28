@@ -5,12 +5,17 @@ import java.util.*;
 public class RouteMatcher {
     public static Map<String, String> match(Route srcRoute, Route destRoute) {
 
+        if (srcRoute.getMethod().equals(destRoute.getMethod())) {
+            return null;
+        }
+
         List<Segment> src = srcRoute.getSegments();
         List<Segment> dest = destRoute.getSegments();
 
         if (src.size() != dest.size()) {
             return null;
         }
+
 
         int size = src.size();
         Map<String, String> map = new HashMap<String, String>();

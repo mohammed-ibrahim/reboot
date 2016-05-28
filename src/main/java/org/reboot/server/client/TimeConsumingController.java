@@ -6,7 +6,6 @@ import java.io.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 
-import org.reboot.server.entity.*;
 
 public class TimeConsumingController implements Controller {
     public HttpResponse process(HttpRequest request) {
