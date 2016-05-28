@@ -19,7 +19,7 @@ public class Segment {
         if (keyPath.length() > 2) {
 
             String startChar = keyPath.substring(0,1);
-            String endChar = keyPath.substring(keyPath.length()-2, keyPath.length()-1);
+            String endChar = keyPath.substring(keyPath.length()-1, keyPath.length());
 
             if (startChar.equals("<") && endChar.equals(">")) {
                 this.path = stripEdges(keyPath);

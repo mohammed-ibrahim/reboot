@@ -9,7 +9,9 @@ public class Route {
 
     private Method method;
 
-    public Route(String route, Method method) {
+    private Class klass;
+
+    public Route(String route, Method method, Class klass) {
 
         List<String> segmentList = Arrays.asList(route.split("/"));
         List<Segment> formattedSegments = new ArrayList<Segment>();
@@ -22,6 +24,7 @@ public class Route {
 
         this.segments = formattedSegments;
         this.method = method;
+        this.klass = klass;
     }
 
     public List<Segment> getSegments() {
@@ -38,6 +41,14 @@ public class Route {
 
     public void setMethod(Method method) {
         this.method = method;
+    }
+
+    public Class getKlass() {
+        return this.klass;
+    }
+
+    public void setKlass(Class klass) {
+        this.klass = klass;
     }
 
     public String toString() {
