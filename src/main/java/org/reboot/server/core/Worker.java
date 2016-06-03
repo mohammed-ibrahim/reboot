@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import java.net.SocketTimeoutException;
+import static org.reboot.server.util.Trace.*;
 
 class Worker implements Runnable {
 
@@ -36,7 +37,7 @@ class Worker implements Runnable {
     public Worker(Socket socket, Integer requestTimeOut, Integer responseTimeOut, List<Route> routes) {
         this.socket = socket;
         this.requestTimeOut = requestTimeOut;
-        try { this.socket.setSoTimeout(this.requestTimeOut); } catch (Exception e) { log.error(e.getMessage()); }
+        try { this.socket.setSoTimeout(this.requestTimeOut); } catch (Exception e) { traceError(e); }
         this.responseTimeOut = responseTimeOut;
         this.routes = routes;
     }
@@ -50,7 +51,6 @@ class Worker implements Runnable {
             log.info("Processing the request...");
             HttpRequest request = new HttpRequest(in);
 
-
             log.info("Obtaining controller...");
             Controller controller = getController(request);
             log.info("Controller fetched successfully...");
@@ -62,18 +62,21 @@ class Worker implements Runnable {
             //log.info("Writing ouput: " + result.getText());
             out.write(result.getText());
         } catch (SocketTimeoutException sto) {
-            try { out.write(HttpResponse.REQUEST_TIMEOUT.getText()); } catch (Exception ie) { log.error(ie.getMessage()); }
+            try { out.write(HttpResponse.REQUEST_TIMEOUT.getText()); } catch (Exception ie) { traceError(ie); }
+            log.info("sto");
             log.error(sto.getMessage());
         } catch (MethodNotAllowedException sto) {
-            try { out.write(HttpResponse.METHOD_NOT_ALLOWED.getText()); } catch (Exception ie) { log.error(ie.getMessage()); }
+            try { out.write(HttpResponse.METHOD_NOT_ALLOWED.getText()); } catch (Exception ie) { traceError(ie); }
+            log.info("mto");
             log.error(sto.getMessage());
         } catch (Exception e) {
-            try { out.write(HttpResponse.INTERNAL_SERVER_ERROR.getText()); } catch (Exception ie) { log.error(ie.getMessage()); }
-            log.error(e.getMessage());
+            try { out.write(HttpResponse.INTERNAL_SERVER_ERROR.getText()); } catch (Exception ie) { traceError(ie); }
+            log.info("e");
+            traceError(e);
         } finally {
-            try { out.close(); } catch (Exception e) { log.error(e.getMessage()); }
-            try { in.close(); } catch (Exception e) { log.error(e.getMessage()); }
-            try { this.socket.close(); } catch (Exception e) { log.error(e.getMessage()); }
+            try { out.close(); } catch (Exception e) { traceError(e); }
+            try { in.close(); } catch (Exception e) { traceError(e); }
+            try { this.socket.close(); } catch (Exception e) { traceError(e); }
         }
     }
 
@@ -82,16 +85,18 @@ class Worker implements Runnable {
         MatchedRoute matchedRoute = null;
 
         if (route != null) {
-            //log.info("Searching for route...");
+            log.info("Searching for route...");
             matchedRoute = RouteMatcher.getRoute(this.routes, route);
 
             if (matchedRoute == null) {
-               throw new MethodNotAllowedException();
+                log.info("Route not found!");
+                throw new MethodNotAllowedException();
             }
         }
 
         try { 
             request.setPathVariables(matchedRoute.getPathVariables());
+            request.setRouteExtendedData(matchedRoute.getAvailableRoute().getExtendedData());
             return (Controller) matchedRoute.getAvailableRoute().getKlass().newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Controller not found");

@@ -36,6 +36,8 @@ public class HttpRequest {
 
     private String body;
 
+    private Object routeExtendedData;
+
     public Method getMethod() {
         return this.method;
     }
@@ -84,8 +86,17 @@ public class HttpRequest {
         this.body = body;
     }
 
+    public Object getRouteExtendedData() {
+        return this.routeExtendedData;
+    }
+
+    public void setRouteExtendedData(Object routeExtendedData) {
+        this.routeExtendedData = routeExtendedData;
+    }
+
     public String toString() {
-        return (this.method + ":" +  this.resource + ":" + this.headers + ":" + this.requestParams + ":" + this.pathVariables + ":" + this.body);
+        return (this.method + ":" +  this.resource + ":" + this.headers + ":"
+            + this.requestParams + ":" + this.pathVariables + ":" + this.body + ":" + safeString(this.routeExtendedData));
     }
 
     public HttpRequest(BufferedReader in) throws Exception {
@@ -125,5 +136,13 @@ public class HttpRequest {
         this.method = Method.valueOf(headers[0]);
         this.resource = headers[1];
         String version = headers[2];
+    }
+
+    private String safeString(Object obj) {
+        if (obj == null) {
+            return "NULL";
+        }
+
+        return obj.toString();
     }
 }

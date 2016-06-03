@@ -11,6 +11,8 @@ public class Route {
 
     private Class klass;
 
+    private Object extendedData;
+
     public List<Segment> getSegments() {
         return this.segments;
     }
@@ -35,6 +37,14 @@ public class Route {
         this.klass = klass;
     }
 
+    public Object getExtendedData() {
+        return this.extendedData;
+    }
+
+    public void setExtendedData(Object extendedData) {
+        this.extendedData = extendedData;
+    }
+
     public Route(String route, Method method, Class klass) {
 
         List<String> segmentList = Arrays.asList(route.split("/"));
@@ -51,7 +61,23 @@ public class Route {
         this.klass = klass;
     }
 
+    public Route(String route, Method method, Class klass, Object extendedData) {
+        this(route, method, klass);
+        this.extendedData = extendedData;
+    }
+
     public String toString() {
-        return this.method.toString() + ":" + this.segments.toString() + ":" + this.klass.toString();
+        return this.method.toString() + ":"
+        + this.segments.toString() + ":"
+        + safeString(this.klass) + ":"
+        + safeString(this.extendedData);
+    }
+
+    private String safeString(Object obj) {
+        if (obj == null) {
+            return "NULL";
+        }
+
+        return obj.toString();
     }
 }
