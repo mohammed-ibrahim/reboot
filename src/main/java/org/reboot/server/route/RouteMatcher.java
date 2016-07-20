@@ -8,6 +8,7 @@ public class RouteMatcher {
     private static Logger log = LoggerFactory.getLogger(RouteMatcher.class);
 
     public static MatchedRoute getRoute(List<Route> availableRoutes, Route requestRoute) {
+        log.info("Requested route: " + requestRoute.toString() + " Available routes: " + availableRoutes.toString());
 
         for (Route availableRoute: availableRoutes) {
             Map<String, String> result = match(requestRoute, availableRoute);

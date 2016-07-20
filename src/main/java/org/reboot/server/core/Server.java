@@ -14,7 +14,7 @@ import org.reboot.server.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class Server {
+public class Server {
 
     private int port = 0;
 
