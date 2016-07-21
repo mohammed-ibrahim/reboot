@@ -137,4 +137,8 @@ public class HttpResponse {
 
         return map;
     }
+
+    public static HttpResponse fromFile(BufferedReader br) throws Exception {
+        return HttpResponseBuilder.build(br);
+    }
 }
