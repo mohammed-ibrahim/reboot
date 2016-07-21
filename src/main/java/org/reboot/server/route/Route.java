@@ -47,7 +47,11 @@ public class Route {
 
     public Route(String route, Method method, Class klass) {
 
-        List<String> segmentList = Arrays.asList(route.split("/"));
+        String cleanedRoute = route;
+        if (route.indexOf("?") != -1) {
+            cleanedRoute = route.substring(0, route.indexOf("?"));
+        }
+        List<String> segmentList = Arrays.asList(cleanedRoute.split("/"));
         List<Segment> formattedSegments = new ArrayList<Segment>();
 
         for (String segmentPath: segmentList) {

@@ -134,7 +134,7 @@ public class HttpRequest {
         }
 
         this.method = Method.valueOf(headers[0]);
-        this.resource = headers[1];
+        setResourceAndRequestParameters(headers[1]);
         String version = headers[2];
     }
 
@@ -144,5 +144,35 @@ public class HttpRequest {
         }
 
         return obj.toString();
+    }
+
+    private void setResourceAndRequestParameters(String fullResource) {
+        if (fullResource.indexOf("?") == -1) {
+            this.resource = fullResource;
+            return;
+        }
+
+        this.resource = fullResource.substring(0, fullResource.indexOf("?"));
+        String params = fullResource.substring(fullResource.indexOf("?")+1);
+
+        if (params.length() > 0) {
+            this.requestParams = parseRequestParams(params);
+        }
+    }
+
+    private Map<String, String> parseRequestParams(String params) {
+        Map<String,String> fmtd = new HashMap<String, String>();
+
+        for (String keySet: params.split("&")) {
+            String[] kvp = keySet.split("=");
+
+            if (kvp.length == 1) {
+                fmtd.put(kvp[0], "");
+            } else {
+                fmtd.put(kvp[0], kvp[1]);
+            }
+        }
+
+        return fmtd;
     }
 }

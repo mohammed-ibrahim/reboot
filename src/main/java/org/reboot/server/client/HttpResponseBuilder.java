@@ -38,9 +38,13 @@ public class HttpResponseBuilder {
         }
 
         if (sb.length() > 0) {
-            return new HttpResponse(responseCode, sb.toString());
+            HttpResponse response = new HttpResponse(responseCode, sb.toString());
+            response.setHeaders(headers);
+            return response;
         } else {
-            return new HttpResponse(responseCode);
+            HttpResponse response = new HttpResponse(responseCode);
+            response.setHeaders(headers);
+            return response;
         }
     }
 

@@ -49,6 +49,8 @@ public class HttpResponse {
 
     private Integer status = null;
 
+    private Map<String,String> headers = new HashMap<String, String>();
+
     private String body = null;
 
     public Integer getStatus() {
@@ -57,6 +59,14 @@ public class HttpResponse {
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    public Map<String,String> getHeaders() {
+        return this.headers;
+    }
+
+    public void setHeaders(Map<String,String> headers) {
+        this.headers = headers;
     }
 
     public String getBody() {
@@ -76,7 +86,7 @@ public class HttpResponse {
     }
 
     public HttpResponse(Integer status, String body) {
-        this.status = status;
+        this(status);
         this.body = body;
     }
 
@@ -91,15 +101,15 @@ public class HttpResponse {
 
     public String getPacketedBody() {
 
-        return getHeaderLine() + CR + formatHeaders(getDefaultHeaders(), this.body.length()) + CR + this.body.toString();
+        return getHeaderLine() + CR + formatHeaders(getDefaultHeaders(), this.headers, this.body.length()) + CR + this.body.toString();
     }
 
     public String getEmptyPacketBody() {
 
-        return getHeaderLine() + CR + formatHeaders(getDefaultHeaders(), null) + CR;
+        return getHeaderLine() + CR + formatHeaders(getDefaultHeaders(), this.headers, null) + CR;
     }
 
-    public String formatHeaders(Map<String, String> map, Integer contentLength) {
+    public String formatHeaders(Map<String, String> defaultHeaders, Map<String, String> headers, Integer contentLength) {
         StringBuilder sb = new StringBuilder();
 
         if (contentLength != null) {
@@ -109,11 +119,20 @@ public class HttpResponse {
             sb.append(CR);
         }
 
-        for (String key: map.keySet()) {
+        for (String key: defaultHeaders.keySet()) {
             sb.append(key);
             sb.append(": ");
-            sb.append(map.get(key));
+            sb.append(defaultHeaders.get(key));
             sb.append(CR);
+        }
+
+        for (String key: headers.keySet()) {
+            if (!key.equals("Content-Length")) {
+                sb.append(key);
+                sb.append(": ");
+                sb.append(headers.get(key));
+                sb.append(CR);
+            }
         }
 
         return sb.toString();
