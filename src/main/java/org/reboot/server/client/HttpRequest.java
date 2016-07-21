@@ -108,7 +108,11 @@ public class HttpRequest {
         parseHeader(firstLine);
 
         String line = in.readLine();
-        while (!line.isEmpty()) {
+        while (true) {
+            if (line == null || line.isEmpty()) {
+                break;
+            }
+
             String[] split = line.split(": ");
             headers.put(split[0], split[1]);
 
