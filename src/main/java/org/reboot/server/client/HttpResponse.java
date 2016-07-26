@@ -99,17 +99,17 @@ public class HttpResponse {
         return getEmptyPacketBody();
     }
 
-    public String getPacketedBody() {
+    private String getPacketedBody() {
 
         return getHeaderLine() + CR + formatHeaders(getDefaultHeaders(), this.headers, this.body.length()) + CR + this.body.toString();
     }
 
-    public String getEmptyPacketBody() {
+    private String getEmptyPacketBody() {
 
         return getHeaderLine() + CR + formatHeaders(getDefaultHeaders(), this.headers, null) + CR;
     }
 
-    public String formatHeaders(Map<String, String> defaultHeaders, Map<String, String> headers, Integer contentLength) {
+    private String formatHeaders(Map<String, String> defaultHeaders, Map<String, String> headers, Integer contentLength) {
         StringBuilder sb = new StringBuilder();
 
         if (contentLength != null) {
@@ -138,7 +138,7 @@ public class HttpResponse {
         return sb.toString();
     }
 
-    public String getHeaderLine() {
+    private String getHeaderLine() {
         if (this.status == null) {
             this.status = new Integer(201);
         }
@@ -149,7 +149,7 @@ public class HttpResponse {
         return httpVer + " " + this.status.toString() + " " + textStat ;
     }
 
-    public Map<String, String> getDefaultHeaders() {
+    private Map<String, String> getDefaultHeaders() {
         Map<String, String> map = new HashMap<String, String>();
 
         map.put("Server", "reboot-1.0");
