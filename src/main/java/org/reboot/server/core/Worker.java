@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import org.reboot.server.util.*;
 
 import java.net.SocketTimeoutException;
 import static org.reboot.server.util.Trace.*;
@@ -55,7 +56,7 @@ class Worker implements Runnable {
             Controller controller = getController(request);
             log.info("Controller fetched successfully...");
 
-            log.info(request.toString());
+            log.info(Serializer.getString(request));
 
             Future <HttpResponse> resp = RequestProcessor.submit(controller, request);
             HttpResponse result = getResponse(resp);

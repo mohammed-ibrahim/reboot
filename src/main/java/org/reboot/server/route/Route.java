@@ -69,19 +69,4 @@ public class Route {
         this(route, method, klass);
         this.extendedData = extendedData;
     }
-
-    public String toString() {
-        return this.method.toString() + ":"
-        + this.segments.toString() + ":"
-        + safeString(this.klass) + ":"
-        + safeString(this.extendedData);
-    }
-
-    private String safeString(Object obj) {
-        if (obj == null) {
-            return "NULL";
-        }
-
-        return obj.toString();
-    }
 }

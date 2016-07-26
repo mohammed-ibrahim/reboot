@@ -94,11 +94,6 @@ public class HttpRequest {
         this.routeExtendedData = routeExtendedData;
     }
 
-    public String toString() {
-        return (this.method + ":" +  this.resource + ":" + this.headers + ":"
-            + this.requestParams + ":" + this.pathVariables + ":" + this.body + ":" + safeString(this.routeExtendedData));
-    }
-
     public HttpRequest(BufferedReader in) throws Exception {
         this.headers = new HashMap<String, String>();
         this.requestParams = new HashMap<String, String>();

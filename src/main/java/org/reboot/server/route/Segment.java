@@ -54,8 +54,4 @@ public class Segment {
     public void setSegmentType(SegmentType segmentType) {
         this.segmentType = segmentType;
     }
-
-    public String toString() {
-        return this.segmentType.toString() + " " + this.path;
-    }
 }

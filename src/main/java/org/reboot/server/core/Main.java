@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import org.reboot.server.route.*;
 import org.reboot.server.client.*;
+import org.reboot.server.util.*;
 
 class Main {
     public static void main(String []args) {
@@ -20,7 +21,7 @@ class Main {
         */
         routes.add(new Route("/v1/<term_id>/v2?a=b&c=d&m=z", Method.GET, TestController.class));
 
-        log.info(routes.toString());
+        log.info(Serializer.getString(routes));
 
         Server server = new Server(9899, 5, 2000, 2000, routes);
         server.startServer();

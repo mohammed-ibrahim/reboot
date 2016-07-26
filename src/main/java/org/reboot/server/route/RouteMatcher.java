@@ -4,18 +4,20 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.reboot.server.util.*;
+
 public class RouteMatcher {
     private static Logger log = LoggerFactory.getLogger(RouteMatcher.class);
 
     public static MatchedRoute getRoute(List<Route> availableRoutes, Route requestRoute) {
-        log.info("Requested route: " + requestRoute.toString() + " Available routes: " + availableRoutes.toString());
+        log.info("Requested route: " + Serializer.getString(requestRoute) + " Available routes: " + Serializer.getString(availableRoutes));
 
         for (Route availableRoute: availableRoutes) {
             Map<String, String> result = match(requestRoute, availableRoute);
             if (result != null) {
                 return new MatchedRoute(availableRoute, result);
             } else {
-                log.info("Didn't match: " + availableRoute.toString() + " vs " + requestRoute.toString());
+                log.info("Didn't match: " + Serializer.getString(availableRoute) + " vs " + Serializer.getString(requestRoute));
             }
         }
 
