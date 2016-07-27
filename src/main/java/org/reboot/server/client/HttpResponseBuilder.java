@@ -9,15 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.*;
 
 public class HttpResponseBuilder {
-    public static HttpResponse build(BufferedReader br) {
-        try {
-            return safeBuild(br);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static HttpResponse safeBuild(BufferedReader br) throws Exception {
+    public static HttpResponse build(BufferedReader br) throws Exception {
         List<String> respHeader = parseFirstLine(br.readLine());
         Integer responseCode = Integer.parseInt(respHeader.get(1));
 

@@ -14,11 +14,6 @@ class Main {
         log.info("Booting up....");
 
         List<Route> routes = new ArrayList<Route>();
-        /*
-        routes.add(new Route("/v1", Method.GET, TestController.class));
-        routes.add(new Route("/v2", Method.GET, TimeConsumingController.class));
-        routes.add(new Route("/", Method.GET, ErroredController.class));
-        */
         routes.add(new Route("/v1/<term_id>/v2?a=b&c=d&m=z", Method.GET, TestController.class));
 
         log.info(Serializer.getString(routes));

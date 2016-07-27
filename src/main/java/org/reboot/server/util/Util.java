@@ -19,4 +19,13 @@ public class Util {
     public static String R401 = "HTTP/1.1 401 Unauthorized\r\nContent-Length: %s\r\n\r\n%s";
 
     public static final String contentLength = "Content-Length";
+
+    public static boolean isDigit(String str) {
+        for (char c : str.toCharArray())
+        {
+            if (!Character.isDigit(c)) return false;
+        }
+
+        return true;
+    }
 }

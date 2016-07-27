@@ -50,7 +50,7 @@ class Worker implements Runnable {
             in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
             log.info("Processing the request...");
-            HttpRequest request = new HttpRequest(in);
+            HttpRequest request = HttpRequestBuilder.build(in);
 
             log.info("Obtaining controller...");
             Controller controller = getController(request);
