@@ -89,7 +89,7 @@ public class ClientHelper {
 //
 //      System.out.println("READ COMPLETE");
 
-      Packet packet = PacketReader.readPacket(socket, "asdf");
+      Packet packet = PacketReader.readPacket(socket);
       return packet.getPacketString();
     } catch (Exception e) {
       e.printStackTrace();

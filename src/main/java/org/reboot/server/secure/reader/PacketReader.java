@@ -13,12 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class PacketReader {
   public static final String CONTENT_LENGTH = "content-length";
 
   public static final String TRANSFER_ENCODING = "transfer-encoding";
-  public static Packet readPacket(Socket socket, String newHost) throws Exception {
+  public static Packet readPacket(Socket socket) throws Exception {
     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
     List<String> buffer = new ArrayList<>();
@@ -42,11 +43,13 @@ public class PacketReader {
         transferEncoding = true;
       }
 
-      if (line.toLowerCase().startsWith("host")) {
-        buffer.add("host: " + newHost);
-      } else {
-        buffer.add(line);
-      }
+//      if (line.toLowerCase().startsWith("host")) {
+//        buffer.add("host: " + newHost);
+//      } else {
+//        buffer.add(line);
+//      }
+
+      buffer.add(line);
     }
 
     Packet packet = new Packet();
@@ -69,6 +72,12 @@ public class PacketReader {
   private static void readBasedOnTransferEncoding(BufferedReader in, Packet packet) throws Exception {
     String body = ChunkedBodyReader.read(in);
     packet.setBody(body);
+    List<String> updatedHead = packet
+        .getHead()
+        .stream()
+        .filter(header -> !header.toLowerCase().startsWith(TRANSFER_ENCODING))
+        .collect(Collectors.toList());
+    packet.setHead(new ArrayList<>(updatedHead));
     packet.getHead().add(HeaderUtils.formatHeader(CONTENT_LENGTH, body.length()));
   }
 

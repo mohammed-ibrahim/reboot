@@ -1,13 +1,14 @@
 package org.reboot.server.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.*;
 import java.io.*;
 
-import org.codehaus.jackson.map.ObjectMapper;
 
 public class Serializer {
 
-    private static ObjectMapper mapper = new ObjectMapper(); 
+    private static ObjectMapper mapper = new ObjectMapper();
 
     public static String getString(Object obj) {
         try {

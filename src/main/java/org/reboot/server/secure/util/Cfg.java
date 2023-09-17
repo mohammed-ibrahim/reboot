@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class ConfigurationManager implements Runnable {
+public class Cfg implements Runnable {
   private ScheduledExecutorService executorService;
   private String previouslyKnownMd5;
 
@@ -27,20 +27,20 @@ public class ConfigurationManager implements Runnable {
 
   private Map<String, String> properties;
 
-  private static ConfigurationManager instance;
+  private static Cfg instance;
 
   public static void setup(String filename) {
-    instance = new ConfigurationManager(filename);
+    instance = new Cfg(filename);
   }
 
-  public static ConfigurationManager getInstance() {
+  public static Cfg getInstance() {
     if (instance == null) {
       throw new RuntimeException("NOT SETUP");
     }
     return instance;
   }
 
-  private ConfigurationManager(String filename) {
+  private Cfg(String filename) {
 
     File file = new File(filename);
     if (!file.exists()) {

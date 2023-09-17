@@ -1,9 +1,12 @@
 package org.reboot.server.secure;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.reboot.server.secure.model.Packet;
 import org.reboot.server.secure.reader.PacketReader;
-import org.reboot.server.secure.util.ConfigurationManager;
+import org.reboot.server.secure.util.Cfg;
+import org.reboot.server.secure.util.IDGen;
+import org.reboot.server.secure.util.PacketUtils;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -11,11 +14,12 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.security.cert.CRL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,8 +27,13 @@ public class SockMain {
 
   public static final String CONFIG_FILE_PATH = "config.file.path";
   public static String CRLF = "\r\n";
+
+  private static String SEPARATOR = CRLF + "=============================================================================" + CRLF;
+
   private static String serverFilePath = null;
   private static String serverFilePassword = null;
+
+  private static String dumpDir = null;
 
   private static String destServer = null;
 
@@ -35,11 +44,12 @@ public class SockMain {
       throw new RuntimeException(CONFIG_FILE_PATH + "NOT CONFIGURED");
     }
 
-    ConfigurationManager.setup(appConfigFilePath);
-    ConfigurationManager configurationManager = ConfigurationManager.getInstance();
-    serverFilePath = configurationManager.getRequiredProperty("server.certificate");
-    serverFilePassword = configurationManager.getRequiredProperty("server.certificate.password");
-    destServer = configurationManager.getRequiredProperty("dest.server.host");
+    Cfg.setup(appConfigFilePath);
+    Cfg cfg = Cfg.getInstance();
+    serverFilePath = cfg.getRequiredProperty("server.certificate");
+    serverFilePassword = cfg.getRequiredProperty("server.certificate.password");
+    destServer = cfg.getRequiredProperty("dest.server.host");
+    dumpDir = cfg.getRequiredProperty("data.dump.dir");
 
     SSLServerSocketFactory sslSocketFactory = getSSLSocketFactory();
     SSLServerSocket sslServerSocket = (SSLServerSocket)sslSocketFactory.createServerSocket(8081);
@@ -63,16 +73,20 @@ public class SockMain {
   }
 
   private static void processRequestAndSendResponse(Socket socket) throws Exception {
-    Packet packet = PacketReader.readPacket(socket, destServer);
-    System.out.println("READ COMPLETE FROM CLIENT:");
+    Packet packet = PacketReader.readPacket(socket);
+    String path = PacketUtils.getPathFromRequestPacket(packet);
+    String newId = IDGen.newId(path);
+    File file = Paths.get(dumpDir, newId).toFile();
+    FileUtils.writeStringToFile(file, packet.getPacketString() + SEPARATOR, false);
+    PacketUtils.updateHostHeader(packet, destServer);
 
     BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+    String toServer = packet.getPacketString();
+    FileUtils.writeStringToFile(file, toServer + SEPARATOR, true);
+    String respFromServer = ClientHelper.makeAndReturnRequest(destServer, 443, toServer);
+    FileUtils.writeStringToFile(file, respFromServer + SEPARATOR, true);
 
-    String respFromServer = ClientHelper.makeAndReturnRequest(destServer, 443, packet.getPacketString());
-    System.out.println("Forwarding: " + packet.getPacketString());
-    System.out.println("Response: " + respFromServer);
     out.write(respFromServer);
-    out.flush();
     out.close();
     socket.close();
   }
