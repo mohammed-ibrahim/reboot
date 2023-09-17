@@ -1,7 +1,9 @@
 package org.reboot.server.secure;
 
+import org.apache.commons.lang3.StringUtils;
 import org.reboot.server.secure.model.Packet;
 import org.reboot.server.secure.reader.PacketReader;
+import org.reboot.server.secure.util.ConfigurationManager;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -12,12 +14,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SockMain {
 
+  public static final String CONFIG_FILE_PATH = "config.file.path";
   public static String CRLF = "\r\n";
   private static String serverFilePath = null;
   private static String serverFilePassword = null;
@@ -26,9 +30,16 @@ public class SockMain {
 
   public static void main(String[] args) throws Exception {
 
-    serverFilePath = System.getProperty("server.certificate");
-    serverFilePassword = System.getProperty("server.certificate.password");
-    destServer = System.getProperty("dest.server.host");
+    String appConfigFilePath = System.getProperty(CONFIG_FILE_PATH);
+    if (StringUtils.isBlank(appConfigFilePath)) {
+      throw new RuntimeException(CONFIG_FILE_PATH + "NOT CONFIGURED");
+    }
+
+    ConfigurationManager.setup(appConfigFilePath);
+    ConfigurationManager configurationManager = ConfigurationManager.getInstance();
+    serverFilePath = configurationManager.getRequiredProperty("server.certificate");
+    serverFilePassword = configurationManager.getRequiredProperty("server.certificate.password");
+    destServer = configurationManager.getRequiredProperty("dest.server.host");
 
     SSLServerSocketFactory sslSocketFactory = getSSLSocketFactory();
     SSLServerSocket sslServerSocket = (SSLServerSocket)sslSocketFactory.createServerSocket(8081);
@@ -69,7 +80,7 @@ public class SockMain {
 
   private static SSLServerSocketFactory getSSLSocketFactory() throws Exception {
     KeyStore keyStore = KeyStore.getInstance("PKCS12");
-    keyStore.load(new FileInputStream(new File(serverFilePath)), serverFilePassword.toCharArray());
+    keyStore.load(Files.newInputStream(new File(serverFilePath).toPath()), serverFilePassword.toCharArray());
     KeyManagerFactory keyMan = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     keyMan.init(keyStore, serverFilePassword.toCharArray());
     SSLContext sslContext = SSLContext.getInstance("TLS");
