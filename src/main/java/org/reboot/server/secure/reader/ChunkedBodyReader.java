@@ -33,7 +33,7 @@ public class ChunkedBodyReader {
     return StringUtils.join(buffer, "");
   }
 
-  private static String readBytes(BufferedReader bufferedReader, int chunkSize, int bufferSize) throws Exception {
+  public static String readBytes(BufferedReader bufferedReader, int chunkSize, int bufferSize) throws Exception {
     char[] buffer = new char[bufferSize];
     int numBytesRead = 0;
     StringBuilder sb = new StringBuilder();

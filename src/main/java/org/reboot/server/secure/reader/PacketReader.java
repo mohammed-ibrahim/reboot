@@ -72,11 +72,8 @@ public class PacketReader {
     packet.getHead().add(HeaderUtils.formatHeader(CONTENT_LENGTH, body.length()));
   }
 
-  private static void readBasedOnContentLength(BufferedReader in, int contentLength, Packet packet) throws IOException {
-    char[] characterBuffer = new char[contentLength];
-    in.read(characterBuffer, 0, contentLength);
-    String body = new String(characterBuffer);
-    packet.setBody(body);
+  private static void readBasedOnContentLength(BufferedReader in, int contentLength, Packet packet) throws Exception {
+    packet.setBody(ChunkedBodyReader.readBytes(in, contentLength, contentLength));
   }
 
   private static int parseContentLength(String line) {
