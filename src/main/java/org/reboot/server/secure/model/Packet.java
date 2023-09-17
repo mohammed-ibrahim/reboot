@@ -35,7 +35,7 @@ public class Packet {
     String headStr = StringUtils.join(head, SockMain.CRLF);
 
     if (StringUtils.isNotBlank(this.body)) {
-      return headStr + SockMain.CRLF + this.body;
+      return headStr + SockMain.CRLF + SockMain.CRLF + this.body;
     }
 
     return headStr + SockMain.CRLF;
