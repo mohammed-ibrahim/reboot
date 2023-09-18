@@ -1,7 +1,6 @@
 package org.reboot.server.secure.reader;
 
 import org.apache.commons.lang3.StringUtils;
-import org.reboot.server.secure.SockMain;
 import org.reboot.server.secure.model.Packet;
 import org.reboot.server.secure.util.HeaderUtils;
 
@@ -9,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -29,7 +27,8 @@ public class PacketReader {
     boolean transferEncoding = false;
     while (true) {
 //      line = readWithTimeout(in);
-      line = in.readLine();
+//      line = in.readLine();
+      line = ReaderUtils.readLine(in);
 
       System.out.println("Line read: " + line);
       if (StringUtils.isBlank(line)) {

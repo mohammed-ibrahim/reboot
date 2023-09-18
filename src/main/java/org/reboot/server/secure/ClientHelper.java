@@ -2,6 +2,8 @@ package org.reboot.server.secure;
 
 import org.reboot.server.secure.model.Packet;
 import org.reboot.server.secure.reader.PacketReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -11,6 +13,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
 public class ClientHelper {
+
+  private static Logger log = LoggerFactory.getLogger(ClientHelper.class);
 
   private static final String[] protocols = new String[]{"TLSv1.3"};
   private static final String[] cipher_suites = new String[]{"TLS_AES_128_GCM_SHA256"};
@@ -91,7 +95,8 @@ public class ClientHelper {
 
       return PacketReader.readPacket(socket.getInputStream());
     } catch (Exception e) {
-      e.printStackTrace();
+//      e.printStackTrace();
+      log.error("ERR: ", e);
     } finally {
       if (socket != null)
         socket.close();

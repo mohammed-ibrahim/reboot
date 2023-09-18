@@ -7,6 +7,8 @@ import org.reboot.server.secure.reader.PacketReader;
 import org.reboot.server.secure.util.Cfg;
 import org.reboot.server.secure.util.IDGen;
 import org.reboot.server.secure.util.PacketUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -24,7 +26,9 @@ import java.util.concurrent.Executors;
 
 public class SockMain {
 
+  private static Logger log = LoggerFactory.getLogger(SockMain.class);
   public static final String CONFIG_FILE_PATH = "config.file.path";
+  public static final String DEST_SERVER_HOST = "dest.server.host";
   public static String CRLF = "\r\n";
 
   private static String SEPARATOR = CRLF + "=============================================================================" + CRLF;
@@ -34,7 +38,6 @@ public class SockMain {
 
   private static String dumpDir = null;
 
-  private static String destServer = null;
 
   public static void main(String[] args) throws Exception {
 
@@ -47,9 +50,8 @@ public class SockMain {
     Cfg cfg = Cfg.getInstance();
     serverFilePath = cfg.getRequiredProperty("server.certificate");
     serverFilePassword = cfg.getRequiredProperty("server.certificate.password");
-    destServer = cfg.getRequiredProperty("dest.server.host");
     dumpDir = cfg.getRequiredProperty("data.dump.dir");
-
+    log.info("Starting server");
     SSLServerSocketFactory sslSocketFactory = getSSLSocketFactory();
     SSLServerSocket sslServerSocket = (SSLServerSocket)sslSocketFactory.createServerSocket(8081);
     ExecutorService executorService = Executors.newFixedThreadPool(10);
@@ -77,6 +79,7 @@ public class SockMain {
     String newId = IDGen.newId(path);
     File file = Paths.get(dumpDir, newId).toFile();
     FileUtils.writeStringToFile(file, packet.getPacketString() + SEPARATOR, false);
+    String destServer = Cfg.getInstance().getRequiredProperty(DEST_SERVER_HOST);
     PacketUtils.updateHostHeader(packet, destServer);
 
     BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));

@@ -3,6 +3,8 @@ package org.reboot.server.secure.util;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.reboot.server.secure.model.PropertyNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +22,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class Cfg implements Runnable {
+
+  private static Logger log = LoggerFactory.getLogger(Cfg.class);
   private ScheduledExecutorService executorService;
   private String previouslyKnownMd5;
 
@@ -51,7 +55,7 @@ public class Cfg implements Runnable {
     this.properties = new ConcurrentHashMap<>();
     this.executorService = Executors.newSingleThreadScheduledExecutor();
     this.forceLoadConfigurationAndUpdateFileMd5();
-    System.out.println(String.format("Scheduling md5 verifier at: " + new Date()));
+    log.trace("Scheduling md5 verifier at: ", new Date());
     executorService.scheduleWithFixedDelay(this, 10, 10, TimeUnit.SECONDS);
   }
 
@@ -73,14 +77,14 @@ public class Cfg implements Runnable {
 
   private void reloadConfigIfRequired() {
     String recentlyCalculatedMd5 = getMd5HexOfConfigFile();
-    System.out.println(String.format("Previously-Known md5: %s recentlyCalculatedMd5 md5: %s", this.previouslyKnownMd5, recentlyCalculatedMd5));
+    log.trace("Previously-Known md5: {} recentlyCalculatedMd5 md5: {}", this.previouslyKnownMd5, recentlyCalculatedMd5);
 
     if (!StringUtils.equalsIgnoreCase(this.previouslyKnownMd5, recentlyCalculatedMd5)) {
-      System.out.println(String.format("Reloading configuration"));
+      log.trace("Reloading configuration");
       forceLoadConfigurationAndUpdateFileMd5();
-      System.out.println(String.format("Reloading configuration complete"));
+      log.trace("Reloading configuration complete");
     } else {
-      System.out.println(String.format("Reloading configuration not required."));
+      log.trace("Reloading configuration not required.");
     }
   }
 
@@ -89,7 +93,7 @@ public class Cfg implements Runnable {
       String md5 = DigestUtils.md5Hex(is);
       return md5;
     } catch (Exception e) {
-      System.out.println("Failed to calculate md5");
+      log.trace("Failed to calculate md5: ", e);
       throw new RuntimeException(e);
     }
   }
@@ -105,7 +109,7 @@ public class Cfg implements Runnable {
   public String getProperty(String key, boolean failIfNotConfigured) {
     String value = properties.get(key);
     if (StringUtils.isBlank(value)) {
-      System.out.println("Property value not found for key: " + key + " using empty value");
+      log.error("Property value not found for key: {} using empty value", key);
       if (failIfNotConfigured) {
         throw new PropertyNotFoundException(key);
       }
@@ -125,7 +129,8 @@ public class Cfg implements Runnable {
       Integer intValue = Integer.parseInt(strValue);
       return Optional.of(intValue);
     } catch (Exception e) {
-      System.out.println("Property value with key: " + key + " cannot be parsed to integer");
+      System.out.println();
+      log.trace("Property value with key: {} cannot be parsed to integer", key);
     }
 
     return Optional.empty();
@@ -133,8 +138,8 @@ public class Cfg implements Runnable {
 
   @Override
   public void run() {
-    System.out.println(String.format("Checking md5 at: " + new Date()));
+    log.trace("Checking md5 at: {}", new Date());
     this.reloadConfigIfRequired();
-    System.out.println(String.format("Md5 verification completed at: " + new Date()));
+    log.trace("Md5 verification completed at: " + new Date());
   }
 }
