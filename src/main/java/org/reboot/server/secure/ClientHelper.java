@@ -25,29 +25,29 @@ public class ClientHelper {
       stringBuilder.append("Host: www.google.com"); stringBuilder.append(SockMain.CRLF);
       stringBuilder.append("User-Agent: curl/8.1.2"); stringBuilder.append(SockMain.CRLF);
       stringBuilder.append("Accept: */*"); stringBuilder.append(SockMain.CRLF);
-      String s = makeAndReturnRequest("google.com", 443, stringBuilder.toString());
-      System.out.println(s);
+      Packet packet = makeAndReturnRequest("google.com", 443, stringBuilder.toString());
+      System.out.println(packet.getPacketString());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
-  public static String makeAndReturnRequest(String host, int port, String content) throws Exception {
+  public static Packet makeAndReturnRequest(String host, int port, String content) throws Exception {
 
-    boolean testing = false;
-
-    if (testing) {
-      String s = "HTTP/1.1 200 OK\n" +
-          "Date: Mon, 27 Jul 2009 12:28:53 GMT\n" +
-          "Server: Apache/2.2.14 (Win32)\n" +
-          "Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT\n" +
-          "Content-Length: 5\n" +
-          "Content-Type: text/html\n" +
-          "Connection: Closed\n" +
-          "\n" +
-          "12345";
-
-      return s;
-    }
+//    boolean testing = false;
+//
+//    if (testing) {
+//      String s = "HTTP/1.1 200 OK\n" +
+//          "Date: Mon, 27 Jul 2009 12:28:53 GMT\n" +
+//          "Server: Apache/2.2.14 (Win32)\n" +
+//          "Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT\n" +
+//          "Content-Length: 5\n" +
+//          "Content-Type: text/html\n" +
+//          "Connection: Closed\n" +
+//          "\n" +
+//          "12345";
+//
+//      return s;
+//    }
 
     SSLSocket socket = null;
     PrintWriter out = null;
@@ -89,8 +89,7 @@ public class ClientHelper {
 //
 //      System.out.println("READ COMPLETE");
 
-      Packet packet = PacketReader.readPacket(socket);
-      return packet.getPacketString();
+      return PacketReader.readPacket(socket.getInputStream());
     } catch (Exception e) {
       e.printStackTrace();
     } finally {

@@ -19,7 +19,6 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
-import java.security.cert.CRL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -73,7 +72,7 @@ public class SockMain {
   }
 
   private static void processRequestAndSendResponse(Socket socket) throws Exception {
-    Packet packet = PacketReader.readPacket(socket);
+    Packet packet = PacketReader.readPacket(socket.getInputStream());
     String path = PacketUtils.getPathFromRequestPacket(packet);
     String newId = IDGen.newId(path);
     File file = Paths.get(dumpDir, newId).toFile();
@@ -83,10 +82,11 @@ public class SockMain {
     BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
     String toServer = packet.getPacketString();
     FileUtils.writeStringToFile(file, toServer + SEPARATOR, true);
-    String respFromServer = ClientHelper.makeAndReturnRequest(destServer, 443, toServer);
-    FileUtils.writeStringToFile(file, respFromServer + SEPARATOR, true);
+    Packet respFromServer = ClientHelper.makeAndReturnRequest(destServer, 443, toServer);
+    String respFromServerStr = respFromServer.getPacketString();
+    FileUtils.writeStringToFile(file, respFromServerStr + SEPARATOR, true);
 
-    out.write(respFromServer);
+    out.write(respFromServerStr);
     out.close();
     socket.close();
   }

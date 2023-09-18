@@ -7,6 +7,7 @@ import org.reboot.server.secure.util.HeaderUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -19,8 +20,8 @@ public class PacketReader {
   public static final String CONTENT_LENGTH = "content-length";
 
   public static final String TRANSFER_ENCODING = "transfer-encoding";
-  public static Packet readPacket(Socket socket) throws Exception {
-    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+  public static Packet readPacket(InputStream inputStream) throws Exception {
+    BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
 
     List<String> buffer = new ArrayList<>();
     String line;
@@ -63,6 +64,7 @@ public class PacketReader {
     }
 
     if (transferEncoding) {
+      //TODO: Ensure to fail if header value is other than chunked.
       readBasedOnTransferEncoding(in, packet);
     }
 
