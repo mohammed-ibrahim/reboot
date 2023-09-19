@@ -67,7 +67,6 @@ public class ChunkedBodyReader {
     while (numBytesRead < chunkSize) {
       int pendingBytes = calculatePendingBytes(numBytesRead, buffer.length, chunkSize);
       log.info("Reading from: {} to: {}", 0, pendingBytes);
-//      int read = bufferedReader.read(buffer, 0, pendingBytes);
       int read = ReaderUtils.read(bufferedReader, buffer, 0, pendingBytes);
       log.info("Read complete, num bytes: {}", read);
 
