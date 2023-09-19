@@ -1,6 +1,7 @@
 package org.reboot.server.secure.reader;
 
 import org.apache.commons.lang3.StringUtils;
+import org.reboot.server.secure.SockMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,25 @@ public class ChunkedBodyReader {
 
   public static String read(BufferedReader bufferedReader) throws Exception {
     return read(bufferedReader, DEFAULT_BUFFER_SIZE);
+  }
+
+  private static String readV2(BufferedReader bufferedReader, int bufferSize) {
+    String line;
+    List<String> list = new ArrayList<>();
+    while (true) {
+      line = ReaderUtils.readLine(bufferedReader);
+      if ("0".equals(line)) {
+        log.info("Breaking line: {}", line);
+        break;
+      }
+
+      list.add(line);
+      log.info("************: [{}]", line);
+    }
+
+    log.info("LAST STATUS: ************: [{}]", line);
+    log.info("PRINT: ************: [{}]", StringUtils.join(list, SockMain.CRLF));
+    throw new RuntimeException("ERROR");
   }
 
   public static String read(BufferedReader bufferedReader, int bufferSize) throws Exception {
@@ -50,8 +70,16 @@ public class ChunkedBodyReader {
 //      int read = bufferedReader.read(buffer, 0, pendingBytes);
       int read = ReaderUtils.read(bufferedReader, buffer, 0, pendingBytes);
       log.info("Read complete, num bytes: {}", read);
-      numBytesRead += read;
-      sb.append(new String(buffer, 0, read));
+
+      if (read == -1) {
+        log.error("Unexpected break: {}", read);
+        break;
+      }
+
+      if (read > 0) {
+        numBytesRead += read;
+        sb.append(new String(buffer, 0, read));
+      }
     }
 
     log.info("Successfully read chunk bytes");
