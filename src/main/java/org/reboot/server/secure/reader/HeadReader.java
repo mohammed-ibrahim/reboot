@@ -24,11 +24,13 @@ public class HeadReader {
   public static final String CONTENT_TYPE = "content-type";
 
   public static PacketHead readHead(InputStream inputStream) {
-    BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
-    return readWithExistingBuffer(in);
+//    BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
+//    return readWithExistingBuffer(in);
+
+    return null;
   }
 
-  public static PacketHead readWithExistingBuffer(BufferedReader in) {
+  public static PacketHead readWithExistingBuffer(InputStream in) throws Exception {
     PacketHead packetHead = new PacketHead();
     packetHead.setContentLength(0);
     packetHead.setChunked(false);
@@ -39,7 +41,8 @@ public class HeadReader {
     int contentLength = 0;
 
     while (true) {
-      line = ReaderUtils.readLine(in);
+//      line = ReaderUtils.readLine(in);
+      line = StreamReader.readLine(in);
 
       System.out.println("Line read: " + line);
       if (StringUtils.isBlank(line)) {
