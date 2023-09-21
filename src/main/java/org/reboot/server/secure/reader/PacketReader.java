@@ -35,16 +35,24 @@ public class PacketReader {
 
   private static void readBasedOnTransferEncoding(BufferedReader in, InputStream inputStream, Packet packet, String encoding) throws Exception {
 //    String body = LineBasedReader.read(inputStream, encoding);
-    String body = LineBasedReader.readWithExistingBuffer(in);
-//    String body = ChunkedBodyReader.read(in);
+//    String body = LineBasedReader.readWithExistingBuffer(in);
+
+    String body;
+    boolean readWithLineBasedReader = true;
+
+    if (readWithLineBasedReader) {
+      body = LineBasedReader.readWithExistingBuffer(in);
+    } else {
+      body = ChunkedBodyReader.read(in);
+      List<String> updatedHead = packet
+          .getHead()
+          .stream()
+          .filter(header -> !header.toLowerCase().startsWith(HeadReader.TRANSFER_ENCODING))
+          .collect(Collectors.toList());
+      packet.setHead(new ArrayList<>(updatedHead));
+      packet.getHead().add(HeaderUtils.formatHeader(HeadReader.CONTENT_LENGTH, body.length()));
+    }
     packet.setBody(body);
-//    List<String> updatedHead = packet
-//        .getHead()
-//        .stream()
-//        .filter(header -> !header.toLowerCase().startsWith(HeadReader.TRANSFER_ENCODING))
-//        .collect(Collectors.toList());
-//    packet.setHead(new ArrayList<>(updatedHead));
-//    packet.getHead().add(HeaderUtils.formatHeader(HeadReader.CONTENT_LENGTH, body.length()));
   }
 
   private static void readBasedOnContentLength(BufferedReader in, int contentLength, Packet packet) throws Exception {
