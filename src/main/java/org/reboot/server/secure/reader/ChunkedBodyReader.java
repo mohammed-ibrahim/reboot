@@ -53,7 +53,10 @@ public class ChunkedBodyReader {
       log.info("Read str: [{}]", str);
       buffer.add(str);
       log.info("Flushing the residual");
-      ReaderUtils.readLine(bufferedReader); //flush the residual CRLF
+      String residual = ReaderUtils.readLine(bufferedReader);//flush the residual CRLF
+      if (residual.length() > 2) {
+        throw new RuntimeException("Large residual seen.");
+      }
     }
 
     return StringUtils.join(buffer, "");

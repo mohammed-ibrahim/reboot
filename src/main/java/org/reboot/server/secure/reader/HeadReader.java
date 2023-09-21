@@ -61,13 +61,13 @@ public class HeadReader {
           packetHead.setChunked(true);
           break;
 
-        case CONTENT_TYPE:
-          Optional<String> encoding = HeaderUtils.getHeaderFragment(line, CHARSET);
-          encoding.ifPresent(value -> {
-            log.debug("Found encoding: {}", value);
-            packetHead.setEncoding(value);
-          });
-          break;
+//        case CONTENT_TYPE:
+//          Optional<String> encoding = HeaderUtils.getHeaderFragment(line, CHARSET);
+//          encoding.ifPresent(value -> {
+//            log.debug("Found encoding: {}", value);
+//            packetHead.setEncoding(value);
+//          });
+//          break;
 
         default:
           log.trace("Not processing header: {}", headerKey);

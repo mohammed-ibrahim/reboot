@@ -31,6 +31,8 @@ public class LineBasedReader {
 
       if ("0".equals(line) || line == null) {
         log.info("Breaking line");
+        buffer.add("0");
+        buffer.add(SockMain.CRLF);
         break;
       }
 

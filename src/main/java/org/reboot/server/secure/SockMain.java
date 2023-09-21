@@ -21,6 +21,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,10 +52,14 @@ public class SockMain {
     serverFilePath = cfg.getRequiredProperty("server.certificate");
     serverFilePassword = cfg.getRequiredProperty("server.certificate.password");
     dumpDir = cfg.getRequiredProperty("data.dump.dir");
-    log.info("Starting server");
+    Optional<Integer> portOptional = cfg.getPropertyAsInteger("local.server.port");
+    if (!portOptional.isPresent()) {
+      throw new RuntimeException("Local Port not configured.");
+    }
+    log.info("Starting server at port: {}", portOptional.get());
     SSLServerSocketFactory sslSocketFactory = getSSLSocketFactory();
-    SSLServerSocket sslServerSocket = (SSLServerSocket)sslSocketFactory.createServerSocket(8081);
-    ExecutorService executorService = Executors.newFixedThreadPool(10);
+    SSLServerSocket sslServerSocket = (SSLServerSocket)sslSocketFactory.createServerSocket(portOptional.get());
+    ExecutorService executorService = Executors.newFixedThreadPool(60);
 
     while (true) {
       Socket socket = sslServerSocket.accept();
