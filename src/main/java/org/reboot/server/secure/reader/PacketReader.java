@@ -13,9 +13,7 @@ import java.util.stream.Collectors;
 public class PacketReader {
 
   public static Packet readPacket(InputStream inputStream) throws Exception {
-    BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
-//    PacketHead packetHead = HeadReader.readHead(inputStream);
-    PacketHead packetHead = HeadReader.readWithExistingBuffer(in);
+    PacketHead packetHead = HeadReader.readWithExistingBuffer(inputStream);
 
     Packet packet = new Packet();
     packet.setHead(packetHead.getHeadLines());
@@ -23,27 +21,24 @@ public class PacketReader {
 
     int contentLength = packetHead.getContentLength();
     if (contentLength > 0) {
-      readBasedOnContentLength(in, contentLength, packet);
+      readBasedOnContentLength(inputStream, contentLength, packet);
       return packet;
     } else if (packetHead.isChunked()) {
       //TODO: Ensure to fail if header value is other than chunked.
-      readBasedOnTransferEncoding(in, inputStream, packet, packetHead.getEncoding());
+      readBasedOnTransferEncoding(inputStream, packet, packetHead.getEncoding());
     }
 
     return packet;
   }
 
-  private static void readBasedOnTransferEncoding(BufferedReader in, InputStream inputStream, Packet packet, String encoding) throws Exception {
-//    String body = LineBasedReader.read(inputStream, encoding);
-//    String body = LineBasedReader.readWithExistingBuffer(in);
-
-    String body;
-    boolean readWithLineBasedReader = true;
+  private static void readBasedOnTransferEncoding(InputStream inputStream, Packet packet, String encoding) throws Exception {
+    String body = null;
+    boolean readWithLineBasedReader = false;
 
     if (readWithLineBasedReader) {
-      body = LineBasedReader.readWithExistingBuffer(in);
+//      body = LineBasedReader.readWithExistingBuffer(in);
     } else {
-      body = ChunkedBodyReader.read(in);
+      body = ChunkedBodyReader.read(inputStream);
       List<String> updatedHead = packet
           .getHead()
           .stream()
@@ -55,7 +50,9 @@ public class PacketReader {
     packet.setBody(body);
   }
 
-  private static void readBasedOnContentLength(BufferedReader in, int contentLength, Packet packet) throws Exception {
-    packet.setBody(ChunkedBodyReader.readBytes(in, contentLength, contentLength));
+  private static void readBasedOnContentLength(InputStream in, int contentLength, Packet packet) throws Exception {
+//    packet.setBody(ChunkedBodyReader.readBytes(in, contentLength, contentLength));
+    String body = StreamReader.readBytes(in, contentLength);
+    packet.setBody(body);
   }
 }

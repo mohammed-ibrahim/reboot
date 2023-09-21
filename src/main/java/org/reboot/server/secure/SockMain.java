@@ -26,6 +26,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SockMain {
+  /*
+  TODO:
+      Make read with timeout.
+      Handle SocketClosed/Timeout exception.
+      Write async
+      Multi-part file read/write.
+      Make: StreamReader as object holder.
+   */
 
   private static Logger log = LoggerFactory.getLogger(SockMain.class);
   public static final String CONFIG_FILE_PATH = "config.file.path";
