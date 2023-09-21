@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,6 @@ public class ChunkedBodyReader {
       log.info("Read str: [{}]", str);
       buffer.add(str);
       log.info("Flushing the residual");
-//      String residual = ReaderUtils.readLine(bufferedReader);//flush the residual CRLF
       String residual = StreamReader.readLine(inputStream);
       if (residual.length() > 2) {
         throw new RuntimeException("Large residual seen.");
