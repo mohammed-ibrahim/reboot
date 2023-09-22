@@ -34,6 +34,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
     streamHeaders();
 
     if (headerProcessor.hasBody()) {
+      this.outputStream.write(CRLF.getBytes());
       if (headerProcessor.isContentLength()) {
         streamBasedOnContentLength();
       } else if (headerProcessor.isChunkedPacket()) {
@@ -45,7 +46,27 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
   private void streamBasedOnChunkedData() throws Exception  {
-    throw new RuntimeException("not implemented yet");
+
+    byte[] lineBytes = readLineBytes();
+    while (lineBytes.length > 0) {
+      String chunkSizeHexString = new String(lineBytes);
+      int chunkSize = Integer.parseInt(chunkSizeHexString, 16);
+      log.info("Chunk size: {}", chunkSize);
+
+      this.outputStream.write(lineBytes);
+      this.outputStream.write(CRLF.getBytes());
+
+      if (chunkSize == 0) {
+//        this.outputStream.write(CRLF.getBytes());
+        return;
+      }
+
+      this.streamBytes(chunkSize);
+      this.outputStream.write(CRLF.getBytes());
+
+      readLineBytes();
+      lineBytes = readLineBytes();
+    }
   }
 
   private void streamBasedOnContentLength() throws Exception {
@@ -91,7 +112,6 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
       log.debug("Read line: {}", new String(data));
       if (data.length < 1) {
-        this.outputStream.write(CRLF.getBytes());
         break;
       }
 
