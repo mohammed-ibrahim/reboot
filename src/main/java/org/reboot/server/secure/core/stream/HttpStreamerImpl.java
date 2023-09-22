@@ -45,10 +45,14 @@ public class HttpStreamerImpl implements IHttpStreamer {
       } else {
         throw new RuntimeException("Unexpected");
       }
+    } else {
+      this.outputStream.write(CRLF.getBytes());
     }
 
-    this.outputStream.close();
-    this.instanceBuffer.clone();
+//    this.outputStream.flush();
+//    this.outputStream.close();
+//    this.outputStream.close();
+//    this.instanceBuffer.clone();
   }
 
   private void streamBasedOnChunkedData() throws Exception  {
