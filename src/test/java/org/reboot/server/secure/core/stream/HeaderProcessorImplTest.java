@@ -19,7 +19,7 @@ public class HeaderProcessorImplTest {
   @Test
   public void canDetectContentLength() throws Exception {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(NEW_HOST);
+    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(NEW_HOST, false);
 
     headerProcessor.writeHeader(CONTENT_LENGTH.getBytes(), byteArrayOutputStream);
 
@@ -33,7 +33,7 @@ public class HeaderProcessorImplTest {
   @Test
   public void canDetectTransferEncoding() throws Exception {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(NEW_HOST);
+    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(NEW_HOST, false);
 
     headerProcessor.writeHeader(TRANSFER_ENCODING.getBytes(), byteArrayOutputStream);
 
@@ -47,7 +47,7 @@ public class HeaderProcessorImplTest {
   @Test
   public void canReplaceNewHost() throws Exception {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(NEW_HOST);
+    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(NEW_HOST, true);
 
     headerProcessor.writeHeader(OLD_HOST_HEADER.getBytes(), byteArrayOutputStream);
 

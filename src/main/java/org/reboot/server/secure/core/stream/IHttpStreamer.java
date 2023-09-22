@@ -4,5 +4,5 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public interface IHttpStreamer {
-  void stream();
+  void stream() throws Exception;
 }

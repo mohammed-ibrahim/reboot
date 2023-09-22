@@ -18,21 +18,21 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
 
   public static final String HOST = "host";
 
-  private boolean hasBody;
-
   private boolean isContentLength;
 
   private int contentLength;
 
   private boolean isChunkedPacket;
 
+  private boolean updateHostHeader;
+
   private String newHost;
 
-  public HeaderProcessorImpl(String newHost) {
-    this.hasBody = false;
+  public HeaderProcessorImpl(String newHost, boolean updateHostHeader) {
     this.isContentLength = false;
     this.isChunkedPacket = false;
     this.newHost = newHost;
+    this.updateHostHeader = updateHostHeader;
   }
 
   @Override
@@ -57,7 +57,9 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
         break;
 
       case HOST:
-        updatedHeader = String.format("host: %s", newHost);
+        if (this.updateHostHeader) {
+          updatedHeader = String.format("host: %s", newHost);
+        }
         break;
 
       default:
