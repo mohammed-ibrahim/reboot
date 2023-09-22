@@ -1,5 +1,7 @@
 package org.reboot.server.secure.core;
 
+import org.reboot.server.secure.core.stream.HeaderProcessorImpl;
+import org.reboot.server.secure.core.stream.HttpStreamerImpl;
 import org.reboot.server.secure.util.IConfigurationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,36 +16,57 @@ public class ConnectionWrapper {
 
   private Socket incomingSocket;
 
+  private Socket destinationSocket;
+
   private IDestinationServerSocketProvider destinationServerSocketProvider;
 
   private IConfigurationProvider configurationProvider;
 
-  public ConnectionWrapper(Socket incomingSocket, IDestinationServerSocketProvider destinationServerSocketProvider, IConfigurationProvider configurationProvider) {
+  private String newHost;
+  public ConnectionWrapper(Socket incomingSocket,
+                           Socket destinationSocket,
+                           IConfigurationProvider configurationProvider,
+                           String newHost) {
+
     this.incomingSocket = incomingSocket;
-    this.destinationServerSocketProvider = destinationServerSocketProvider;
+    this.destinationSocket = destinationSocket;
     this.configurationProvider = configurationProvider;
+    this.newHost = newHost;
   }
 
-  public void start() {
-    Socket destinationSocket = destinationServerSocketProvider.getDestinationSocket();
+  public void start() throws Exception {
+//    Socket destinationSocket = destinationServerSocketProvider.getDestinationSocket();
 
     try {
+      log.info("Startin to read from client");
       streamForwardRequest(incomingSocket.getInputStream(), destinationSocket.getOutputStream());
+      log.info("Forwarded request");
     } catch (Exception e) {
-
+      log.error("Error: ", e);
     }
 
     try {
       streamResponse(destinationSocket.getInputStream(), incomingSocket.getOutputStream());
+      log.info("Completed response");
     } catch (Exception e) {
-
+      log.error("Error: ", e);
     }
   }
 
-  private void streamResponse(InputStream inputStream, OutputStream outputStream) {
+  public void close() throws Exception {
+    this.incomingSocket.close();
+
   }
 
-  private void streamForwardRequest(InputStream inputStream, OutputStream outputStream) {
+  private void streamForwardRequest(InputStream inputStream, OutputStream outputStream) throws Exception {
+    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(newHost, true);
+    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(inputStream, outputStream, headerProcessor);
+    httpStreamer.stream();
+  }
 
+  private void streamResponse(InputStream inputStream, OutputStream outputStream) throws Exception {
+    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(null, false);
+    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(inputStream, outputStream, headerProcessor);
+    httpStreamer.stream();
   }
 }

@@ -4,5 +4,5 @@ import java.net.Socket;
 
 public interface IDestinationServerSocketProvider {
 
-  Socket getDestinationSocket();
+  Socket getDestinationSocket() throws Exception;
 }

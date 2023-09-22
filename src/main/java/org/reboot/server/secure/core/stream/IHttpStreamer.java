@@ -5,4 +5,6 @@ import java.io.OutputStream;
 
 public interface IHttpStreamer {
   void stream() throws Exception;
+
+//  void close() throws Exception;
 }

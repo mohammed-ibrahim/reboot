@@ -31,9 +31,12 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
   @Override
   public void stream() throws Exception {
+    log.info("Reading headers");
     streamHeaders();
+    log.info("Reading headers complete");
 
     if (headerProcessor.hasBody()) {
+      log.info("Request has body");
       this.outputStream.write(CRLF.getBytes());
       if (headerProcessor.isContentLength()) {
         streamBasedOnContentLength();
@@ -43,6 +46,9 @@ public class HttpStreamerImpl implements IHttpStreamer {
         throw new RuntimeException("Unexpected");
       }
     }
+
+    this.outputStream.close();
+    this.instanceBuffer.clone();
   }
 
   private void streamBasedOnChunkedData() throws Exception  {
