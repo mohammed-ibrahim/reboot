@@ -2,6 +2,9 @@ package org.reboot.server.secure;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.reboot.server.secure.core.ConnectionWrapper;
+import org.reboot.server.secure.core.DefaultConfigurationProvider;
+import org.reboot.server.secure.core.DefaultDestinationServerSocketProvider;
 import org.reboot.server.secure.model.Packet;
 import org.reboot.server.secure.reader.PacketReader;
 import org.reboot.server.secure.util.Cfg;
@@ -87,24 +90,35 @@ public class SockMain {
   }
 
   private static void processRequestAndSendResponse(Socket socket) throws Exception {
-    Packet packet = PacketReader.readPacket(socket.getInputStream());
-    String path = PacketUtils.getPathFromRequestPacket(packet);
-    String newId = IDGen.newId(path);
-    File file = Paths.get(dumpDir, newId).toFile();
-    FileUtils.writeStringToFile(file, packet.getPacketString() + SEPARATOR, false);
-    String destServer = Cfg.getInstance().getRequiredProperty(DEST_SERVER_HOST);
-    PacketUtils.updateHostHeader(packet, destServer);
+    DefaultDestinationServerSocketProvider destinationServerSocketProvider = new DefaultDestinationServerSocketProvider(Cfg.getInstance().getRequiredProperty(DEST_SERVER_HOST), 443);
 
-    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-    String toServer = packet.getPacketString();
-    FileUtils.writeStringToFile(file, toServer + SEPARATOR, true);
-    Packet respFromServer = ClientHelper.makeAndReturnRequest(destServer, 443, toServer);
-    String respFromServerStr = respFromServer.getPacketString();
-    FileUtils.writeStringToFile(file, respFromServerStr + SEPARATOR, true);
+    ConnectionWrapper connectionWrapper = new ConnectionWrapper(
+        socket,
+        destinationServerSocketProvider.getDestinationSocket(),
+        new DefaultConfigurationProvider(),
+        Cfg.getInstance().getRequiredProperty(DEST_SERVER_HOST)
+    );
 
-    out.write(respFromServerStr);
-    out.close();
-    socket.close();
+    connectionWrapper.start();
+    connectionWrapper.close();
+//    Packet packet = PacketReader.readPacket(socket.getInputStream());
+//    String path = PacketUtils.getPathFromRequestPacket(packet);
+//    String newId = IDGen.newId(path);
+//    File file = Paths.get(dumpDir, newId).toFile();
+//    FileUtils.writeStringToFile(file, packet.getPacketString() + SEPARATOR, false);
+//    String destServer = Cfg.getInstance().getRequiredProperty(DEST_SERVER_HOST);
+//    PacketUtils.updateHostHeader(packet, destServer);
+//
+//    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+//    String toServer = packet.getPacketString();
+//    FileUtils.writeStringToFile(file, toServer + SEPARATOR, true);
+//    Packet respFromServer = ClientHelper.makeAndReturnRequest(destServer, 443, toServer);
+//    String respFromServerStr = respFromServer.getPacketString();
+//    FileUtils.writeStringToFile(file, respFromServerStr + SEPARATOR, true);
+//
+//    out.write(respFromServerStr);
+//    out.close();
+//    socket.close();
   }
 
 
