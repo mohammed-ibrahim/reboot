@@ -1,96 +1,86 @@
 package org.reboot.server.secure.core.stream;
 
+import org.reboot.server.secure.model.HttpHeaderContext;
+import org.reboot.server.secure.model.StreamHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
+@Component
 public class HttpStreamerImpl implements IHttpStreamer {
 
   private static Logger log = LoggerFactory.getLogger(HttpStreamerImpl.class);
   public static String CRLF = "\r\n";
-  private InputStream inputStream;
-
-  private OutputStream outputStream;
 
   private IHeaderProcessor headerProcessor;
 
-  private byte[] instanceBuffer;
-
-  private int instanceBufferSize;
-
-  public HttpStreamerImpl(InputStream inputStream, OutputStream outputStream, IHeaderProcessor headerProcessor) {
-    this.inputStream = inputStream;
-    this.outputStream = outputStream;
+  @Autowired
+  public HttpStreamerImpl(IHeaderProcessor headerProcessor) {
     this.headerProcessor = headerProcessor;
-    this.instanceBufferSize = 16*1024;
-    this.instanceBuffer = new byte[this.instanceBufferSize];
   }
 
   @Override
-  public void stream() throws Exception {
+  public void stream(StreamHandle streamHandle) throws Exception {
     log.info("Reading headers");
-    streamHeaders();
+    byte[] sessionBuffer = new byte[16*1024];
+    HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer);
     log.info("Reading headers complete");
 
-    if (headerProcessor.hasBody()) {
+    if (httpHeaderContext.hasBody()) {
       log.info("Request has body");
-      this.outputStream.write(CRLF.getBytes());
-      if (headerProcessor.isContentLength()) {
-        streamBasedOnContentLength();
-      } else if (headerProcessor.isChunkedPacket()) {
-        streamBasedOnChunkedData();
+      streamHandle.getOutputStream().write(CRLF.getBytes());
+      if (httpHeaderContext.isContentLength()) {
+        streamBasedOnContentLength(httpHeaderContext, streamHandle, sessionBuffer);
+      } else if (httpHeaderContext.isChunkedPacket()) {
+        streamBasedOnChunkedData(streamHandle, sessionBuffer);
       } else {
         throw new RuntimeException("Unexpected");
       }
     } else {
-      this.outputStream.write(CRLF.getBytes());
+      streamHandle.getOutputStream().write(CRLF.getBytes());
     }
-
-//    this.outputStream.flush();
-//    this.outputStream.close();
-//    this.outputStream.close();
-//    this.instanceBuffer.clone();
   }
 
-  private void streamBasedOnChunkedData() throws Exception  {
+  private void streamBasedOnChunkedData(StreamHandle streamHandle, byte[] sessionBuffer) throws Exception  {
 
-    byte[] lineBytes = readLineBytes();
+    byte[] lineBytes = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
     while (lineBytes.length > 0) {
       String chunkSizeHexString = new String(lineBytes);
       int chunkSize = Integer.parseInt(chunkSizeHexString, 16);
       log.info("Chunk size: {}", chunkSize);
 
-      this.outputStream.write(lineBytes);
-      this.outputStream.write(CRLF.getBytes());
+      streamHandle.getOutputStream().write(lineBytes);
+      streamHandle.getOutputStream().write(CRLF.getBytes());
 
       if (chunkSize == 0) {
 //        this.outputStream.write(CRLF.getBytes());
         return;
       }
 
-      this.streamBytes(chunkSize);
-      this.outputStream.write(CRLF.getBytes());
+      this.streamBytes(chunkSize, streamHandle, sessionBuffer);
+      streamHandle.getOutputStream().write(CRLF.getBytes());
 
-      readLineBytes();
-      lineBytes = readLineBytes();
+      readLineBytes(streamHandle.getInputStream(), sessionBuffer);
+      lineBytes = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
     }
   }
 
-  private void streamBasedOnContentLength() throws Exception {
+  private void streamBasedOnContentLength(HttpHeaderContext httpHeaderContext, StreamHandle streamHandle, byte[] sessionBuffer) throws Exception {
     //clear the additional line after the headers.
-    streamBytes(this.headerProcessor.getContentLength());
+    streamBytes(httpHeaderContext.getContentLength(), streamHandle, sessionBuffer);
   }
 
-  public void streamBytes(int chunkSize) throws Exception {
+  public void streamBytes(int chunkSize, StreamHandle streamHandle, byte[] sessionBuffer) throws Exception {
     int numBytesRead = 0;
 
     while (numBytesRead < chunkSize) {
-      int pendingBytes = calculatePendingBytes(numBytesRead, instanceBuffer.length, chunkSize);
+      int pendingBytes = calculatePendingBytes(numBytesRead, sessionBuffer.length, chunkSize);
       log.info("Reading from: {} to: {}", 0, pendingBytes);
-      int read = inputStream.read(instanceBuffer, 0, pendingBytes);
+      int read = streamHandle.getInputStream().read(sessionBuffer, 0, pendingBytes);
       log.info("Read complete, num bytes: {}", read);
 
       if (read == -1) {
@@ -100,7 +90,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
       if (read > 0) {
         numBytesRead += read;
-        outputStream.write(instanceBuffer, 0, read);
+        streamHandle.getOutputStream().write(sessionBuffer, 0, read);
       }
     }
 
@@ -116,21 +106,24 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
 
-  private void streamHeaders() throws Exception {
+  private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer) throws Exception {
+    HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
     while (true) {
-      byte[] data = readLineBytes();
+      byte[] data = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
 
       log.debug("Read line: {}", new String(data));
       if (data.length < 1) {
         break;
       }
 
-      this.headerProcessor.writeHeader(data, this.outputStream);
-      this.outputStream.write(CRLF.getBytes());
+      this.headerProcessor.writeHeader(data, streamHandle.getOutputStream(), httpHeaderContext);
+      streamHandle.getOutputStream().write(CRLF.getBytes());
     }
+
+    return httpHeaderContext;
   }
 
-  public byte[] readLineBytes() throws IOException {
+  public byte[] readLineBytes(InputStream inputStream, byte[] sessionBuffer) throws IOException {
     //TODO Add check if header greater than actual size.
     int index = 0;
     int readItem = inputStream.read();
@@ -144,14 +137,14 @@ public class HttpStreamerImpl implements IHttpStreamer {
           break;
         }
       } else {
-        instanceBuffer[index] = (byte)readItem;
+        sessionBuffer[index] = (byte)readItem;
         index++;
         readItem = inputStream.read();
       }
     }
 
     byte[] fullBuffer = new byte[index];
-    System.arraycopy(instanceBuffer, 0, fullBuffer, 0, index);
+    System.arraycopy(sessionBuffer, 0, fullBuffer, 0, index);
     return fullBuffer;
   }
 }
