@@ -5,6 +5,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.reboot.server.secure.model.PropertyNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,9 +23,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class Cfg implements Runnable {
+@Component
+public class ServerConfiguration implements Runnable, IServerConfiguration {
 
-  private static Logger log = LoggerFactory.getLogger(Cfg.class);
+  private static Logger log = LoggerFactory.getLogger(ServerConfiguration.class);
   private ScheduledExecutorService executorService;
   private String previouslyKnownMd5;
 
@@ -31,27 +34,22 @@ public class Cfg implements Runnable {
 
   private Map<String, String> properties;
 
-  private static Cfg instance;
+  public static final String CONFIG_FILE_PATH = "config.file.path";
 
-  public static void setup(String filename) {
-    instance = new Cfg(filename);
-  }
+  @Autowired
+  public ServerConfiguration() {
 
-  public static Cfg getInstance() {
-    if (instance == null) {
-      throw new RuntimeException("NOT SETUP");
+    String appConfigFilePath = System.getProperty(CONFIG_FILE_PATH);
+    if (StringUtils.isBlank(appConfigFilePath)) {
+      throw new RuntimeException(CONFIG_FILE_PATH + "NOT CONFIGURED");
     }
-    return instance;
-  }
 
-  private Cfg(String filename) {
-
-    File file = new File(filename);
+    File file = new File(appConfigFilePath);
     if (!file.exists()) {
-      throw new RuntimeException("APP CONFIG FILE NOT EXISTS: " + filename);
+      throw new RuntimeException("APP CONFIG FILE NOT EXISTS: " + appConfigFilePath);
     }
 
-    this.configFilePath = filename;
+    this.configFilePath = appConfigFilePath;
     this.properties = new ConcurrentHashMap<>();
     this.executorService = Executors.newSingleThreadScheduledExecutor();
     this.forceLoadConfigurationAndUpdateFileMd5();
@@ -116,6 +114,10 @@ public class Cfg implements Runnable {
     }
 
     return value;
+  }
+
+  public Boolean getBooleanProperty(String key) {
+    return Boolean.valueOf(getRequiredProperty(key));
   }
 
   public Optional<Integer> getPropertyAsInteger(String key) {

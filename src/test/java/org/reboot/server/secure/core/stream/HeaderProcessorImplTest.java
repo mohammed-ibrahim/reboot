@@ -1,8 +1,11 @@
 package org.reboot.server.secure.core.stream;
 
+import org.reboot.server.secure.model.HttpHeaderContext;
+import org.reboot.server.secure.util.IServerConfiguration;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Optional;
 
 import static org.testng.Assert.*;
 
@@ -19,13 +22,13 @@ public class HeaderProcessorImplTest {
   @Test
   public void canDetectContentLength() throws Exception {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(NEW_HOST, false);
+    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(getServerConfig(NEW_HOST, false));
+    HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
+    headerProcessor.writeHeader(CONTENT_LENGTH.getBytes(), byteArrayOutputStream, httpHeaderContext);
 
-    headerProcessor.writeHeader(CONTENT_LENGTH.getBytes(), byteArrayOutputStream);
-
-    assertTrue(headerProcessor.hasBody());
-    assertEquals(headerProcessor.getContentLength(), 80);
-    assertFalse(headerProcessor.isChunkedPacket());
+    assertTrue(httpHeaderContext.hasBody());
+    assertEquals(httpHeaderContext.getContentLength(), 80);
+    assertFalse(httpHeaderContext.isChunkedPacket());
     String processed = new String(byteArrayOutputStream.toByteArray());
     assertEquals(processed, CONTENT_LENGTH);
   }
@@ -33,13 +36,14 @@ public class HeaderProcessorImplTest {
   @Test
   public void canDetectTransferEncoding() throws Exception {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(NEW_HOST, false);
+    HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
+    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(getServerConfig(NEW_HOST, false));
 
-    headerProcessor.writeHeader(TRANSFER_ENCODING.getBytes(), byteArrayOutputStream);
+    headerProcessor.writeHeader(TRANSFER_ENCODING.getBytes(), byteArrayOutputStream, httpHeaderContext);
 
-    assertTrue(headerProcessor.hasBody());
-    assertFalse(headerProcessor.isContentLength());
-    assertTrue(headerProcessor.isChunkedPacket());
+    assertTrue(httpHeaderContext.hasBody());
+    assertFalse(httpHeaderContext.isContentLength());
+    assertTrue(httpHeaderContext.isChunkedPacket());
     String processed = new String(byteArrayOutputStream.toByteArray());
     assertEquals(processed, TRANSFER_ENCODING);
   }
@@ -47,13 +51,42 @@ public class HeaderProcessorImplTest {
   @Test
   public void canReplaceNewHost() throws Exception {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(NEW_HOST, true);
+    HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl(getServerConfig(NEW_HOST, true));
+    HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
+    headerProcessor.writeHeader(OLD_HOST_HEADER.getBytes(), byteArrayOutputStream, httpHeaderContext);
 
-    headerProcessor.writeHeader(OLD_HOST_HEADER.getBytes(), byteArrayOutputStream);
-
-    assertFalse(headerProcessor.hasBody());
+    assertFalse(httpHeaderContext.hasBody());
     String processed = new String(byteArrayOutputStream.toByteArray());
     assertEquals(processed, NEW_HOST_HEADER);
+  }
+
+  private IServerConfiguration getServerConfig(String host, boolean updateHostHeader) {
+    return new IServerConfiguration() {
+      @Override
+      public Boolean getBooleanProperty(String key) {
+        return updateHostHeader;
+      }
+
+      @Override
+      public String getProperty(String key) {
+        return host;
+      }
+
+      @Override
+      public String getRequiredProperty(String key) {
+        return null;
+      }
+
+      @Override
+      public String getProperty(String key, boolean failIfNotConfigured) {
+        return null;
+      }
+
+      @Override
+      public Optional<Integer> getPropertyAsInteger(String key) {
+        return Optional.empty();
+      }
+    };
   }
 
 }
