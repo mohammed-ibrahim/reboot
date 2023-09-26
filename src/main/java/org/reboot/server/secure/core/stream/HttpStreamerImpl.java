@@ -1,5 +1,6 @@
 package org.reboot.server.secure.core.stream;
 
+import org.reboot.server.secure.model.HeaderProcessingResponse;
 import org.reboot.server.secure.model.HttpHeaderContext;
 import org.reboot.server.secure.model.StreamContext;
 import org.reboot.server.secure.model.StreamHandle;
@@ -130,7 +131,13 @@ public class HttpStreamerImpl implements IHttpStreamer {
         break;
       }
 
-      this.headerProcessor.writeHeader(data, streamHandle.getOutputStream(), httpHeaderContext, streamContext);
+      HeaderProcessingResponse headerProcessingResponse = this.headerProcessor.processHeader(data, httpHeaderContext, streamContext);
+
+      if (headerProcessingResponse.isUpdateRequired()) {
+        streamHandle.getOutputStream().write(headerProcessingResponse.getUpdatedContent());
+      } else {
+        streamHandle.getOutputStream().write(data);
+      }
       streamHandle.getOutputStream().write(CRLF.getBytes());
     }
 

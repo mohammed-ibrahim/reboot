@@ -1,5 +1,6 @@
 package org.reboot.server.secure.core.stream;
 
+import org.reboot.server.secure.model.HeaderProcessingResponse;
 import org.reboot.server.secure.model.HttpHeaderContext;
 import org.reboot.server.secure.model.StreamContext;
 import org.testng.annotations.Test;
@@ -20,43 +21,36 @@ public class HeaderProcessorImplTest {
 
   @Test
   public void canDetectContentLength() throws Exception {
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl();
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
-    headerProcessor.writeHeader(CONTENT_LENGTH.getBytes(), byteArrayOutputStream, httpHeaderContext, getStreamContext(NEW_HOST, false));
+    headerProcessor.processHeader(CONTENT_LENGTH.getBytes(), httpHeaderContext, getStreamContext(NEW_HOST, false));
 
     assertTrue(httpHeaderContext.hasBody());
     assertEquals(httpHeaderContext.getContentLength(), 80);
     assertFalse(httpHeaderContext.isChunkedPacket());
-    String processed = new String(byteArrayOutputStream.toByteArray());
-    assertEquals(processed, CONTENT_LENGTH);
   }
 
   @Test
   public void canDetectTransferEncoding() throws Exception {
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
     HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl();
 
-    headerProcessor.writeHeader(TRANSFER_ENCODING.getBytes(), byteArrayOutputStream, httpHeaderContext, getStreamContext(NEW_HOST, false));
+    headerProcessor.processHeader(TRANSFER_ENCODING.getBytes(), httpHeaderContext, getStreamContext(NEW_HOST, false));
 
     assertTrue(httpHeaderContext.hasBody());
     assertFalse(httpHeaderContext.isContentLength());
     assertTrue(httpHeaderContext.isChunkedPacket());
-    String processed = new String(byteArrayOutputStream.toByteArray());
-    assertEquals(processed, TRANSFER_ENCODING);
   }
 
   @Test
   public void canReplaceNewHost() throws Exception {
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl();
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
-    headerProcessor.writeHeader(OLD_HOST_HEADER.getBytes(), byteArrayOutputStream, httpHeaderContext, getStreamContext(NEW_HOST, true));
+    HeaderProcessingResponse headerProcessingResponse = headerProcessor.processHeader(OLD_HOST_HEADER.getBytes(), httpHeaderContext, getStreamContext(NEW_HOST, true));
 
     assertFalse(httpHeaderContext.hasBody());
-    String processed = new String(byteArrayOutputStream.toByteArray());
-    assertEquals(processed, NEW_HOST_HEADER);
+    assertTrue(headerProcessingResponse.isUpdateRequired());
+    assertEquals(NEW_HOST_HEADER, new String(headerProcessingResponse.getUpdatedContent()));
   }
 
   private StreamContext getStreamContext(String host, boolean updateHostHeader) {
