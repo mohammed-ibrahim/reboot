@@ -32,7 +32,6 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
     if (httpHeaderContext.hasBody()) {
       log.info("Request has body");
-      streamHandle.getOutputStream().write(CRLF.getBytes());
       if (httpHeaderContext.isContentLength()) {
         streamBasedOnContentLength(httpHeaderContext, streamHandle, sessionBuffer);
       } else if (httpHeaderContext.isChunkedPacket()) {
@@ -40,8 +39,6 @@ public class HttpStreamerImpl implements IHttpStreamer {
       } else {
         throw new RuntimeException("Unexpected");
       }
-    } else {
-      streamHandle.getOutputStream().write(CRLF.getBytes());
     }
   }
 
@@ -113,6 +110,8 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
       log.debug("Read line: {}", new String(data));
       if (data.length < 1) {
+        //as an empty line was read from input, empty line must be written to output.
+        streamHandle.getOutputStream().write(CRLF.getBytes());
         break;
       }
 
