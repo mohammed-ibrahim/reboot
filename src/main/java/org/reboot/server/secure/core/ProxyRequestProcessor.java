@@ -1,5 +1,6 @@
 package org.reboot.server.secure.core;
 
+import com.google.common.base.Stopwatch;
 import org.reboot.server.secure.core.stream.IHttpStreamer;
 import org.reboot.server.secure.model.SessionHandle;
 import org.reboot.server.secure.model.StreamHandle;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class ProxyRequestProcessor implements IProxyRequestProcessor {
@@ -24,20 +26,29 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
 
   public void start(SessionHandle sessionHandle) throws Exception {
 
+    Stopwatch streamForward = Stopwatch.createStarted();
     try {
-      log.info("Starting to read from client");
+      log.debug("Starting to read from client");
       streamForwardRequest(sessionHandle.getSource().getInputStream(), sessionHandle.getDestination().getOutputStream());
-      log.info("Forwarded request");
+      streamForward.stop();
+      log.debug("Forwarded request");
     } catch (Exception e) {
       log.error("Error: ", e);
     }
 
+    Stopwatch streamResponse = Stopwatch.createStarted();
     try {
+      log.debug("Starting stream response");
       streamResponse(sessionHandle.getDestination().getInputStream(), sessionHandle.getSource().getOutputStream());
-      log.info("Completed response");
+      streamResponse.stop();
+      log.debug("Stream response completed");
     } catch (Exception e) {
       log.error("Error: ", e);
     }
+
+    log.info("Forward stream time: {} ms, response stream time: {} ms",
+        streamForward.elapsed(TimeUnit.MILLISECONDS),
+        streamResponse.elapsed(TimeUnit.MILLISECONDS));
   }
 
   public void close(SessionHandle sessionHandle) throws Exception {

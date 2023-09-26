@@ -37,7 +37,7 @@ public class HttpStreamerImplTest {
     String expected = "GET / HTTP/2" + CRLF +
         "Host: hello.com" + CRLF +
         "User-Agent: curl/8.1.2" + CRLF +
-        "Accept: */*" + CRLF;
+        "Accept: */*" + CRLF + CRLF;
 
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(expected.getBytes());
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
