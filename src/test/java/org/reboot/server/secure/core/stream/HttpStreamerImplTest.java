@@ -1,7 +1,6 @@
 package org.reboot.server.secure.core.stream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.reboot.server.secure.model.StreamHandle;
 import org.reboot.server.secure.util.IServerConfiguration;
 import org.testng.annotations.Test;
@@ -24,7 +23,7 @@ public class HttpStreamerImplTest {
 
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(input.getBytes());
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor());
+    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig());
     StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream);
     httpStreamer.stream(streamHandle);
 
@@ -41,7 +40,7 @@ public class HttpStreamerImplTest {
 
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(expected.getBytes());
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor());
+    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig());
     StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream);
     httpStreamer.stream(streamHandle);
 
@@ -54,7 +53,7 @@ public class HttpStreamerImplTest {
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     InputStream resourceAsStream = this.getClass().getResourceAsStream("/chunked-sample-1.txt");
-    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor());
+    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig());
     StreamHandle streamHandle = new StreamHandle(resourceAsStream, byteArrayOutputStream);
     httpStreamer.stream(streamHandle);
 
@@ -64,7 +63,7 @@ public class HttpStreamerImplTest {
   }
 
   private IHeaderProcessor getHeadProcessor() {
-    return new HeaderProcessorImpl(getServerConfig());
+    return new HeaderProcessorImpl();
   }
 
   private IServerConfiguration getServerConfig() {

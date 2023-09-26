@@ -1,7 +1,9 @@
 package org.reboot.server.secure.core.stream;
 
 import org.reboot.server.secure.model.HttpHeaderContext;
+import org.reboot.server.secure.model.StreamContext;
 import org.reboot.server.secure.model.StreamHandle;
+import org.reboot.server.secure.util.IServerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,20 +16,33 @@ import java.io.InputStream;
 public class HttpStreamerImpl implements IHttpStreamer {
 
   private static Logger log = LoggerFactory.getLogger(HttpStreamerImpl.class);
+
+
+  public static final String DEST_SERVER_HOST = "dest.server.host";
+  public static final String UPDATE_SERVER_HOST = "update.server.host.header";
+
   public static String CRLF = "\r\n";
 
   private IHeaderProcessor headerProcessor;
 
+  private IServerConfiguration serverConfiguration;
+
   @Autowired
-  public HttpStreamerImpl(IHeaderProcessor headerProcessor) {
+  public HttpStreamerImpl(IHeaderProcessor headerProcessor, IServerConfiguration serverConfiguration) {
     this.headerProcessor = headerProcessor;
+    this.serverConfiguration = serverConfiguration;
   }
 
   @Override
   public void stream(StreamHandle streamHandle) throws Exception {
-    log.info("Reading headers");
+
+    String newHost = serverConfiguration.getProperty(DEST_SERVER_HOST);
+    boolean updateHostHeader = serverConfiguration.getBooleanProperty(UPDATE_SERVER_HOST);
+    StreamContext streamContext = new StreamContext(newHost, updateHostHeader);
+
+    log.info("Reading headers, host modification allowed: {}", updateHostHeader);
     byte[] sessionBuffer = new byte[16*1024];
-    HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer);
+    HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, streamContext);
     log.info("Reading headers complete");
 
     if (httpHeaderContext.hasBody()) {
@@ -103,7 +118,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
 
-  private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer) throws Exception {
+  private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer, StreamContext streamContext) throws Exception {
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
     while (true) {
       byte[] data = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
@@ -115,7 +130,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
         break;
       }
 
-      this.headerProcessor.writeHeader(data, streamHandle.getOutputStream(), httpHeaderContext);
+      this.headerProcessor.writeHeader(data, streamHandle.getOutputStream(), httpHeaderContext, streamContext);
       streamHandle.getOutputStream().write(CRLF.getBytes());
     }
 

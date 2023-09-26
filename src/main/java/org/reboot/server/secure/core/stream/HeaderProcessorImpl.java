@@ -3,6 +3,7 @@ package org.reboot.server.secure.core.stream;
 import org.apache.commons.lang3.StringUtils;
 import org.reboot.server.secure.model.HttpHeaderContext;
 import org.reboot.server.secure.model.InvalidHeaderException;
+import org.reboot.server.secure.model.StreamContext;
 import org.reboot.server.secure.util.HeaderUtils;
 import org.reboot.server.secure.util.IServerConfiguration;
 import org.reboot.server.secure.util.ServerConfiguration;
@@ -22,27 +23,17 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
 
   public static final String TRANSFER_ENCODING = "transfer-encoding";
 
-  public static final String DEST_SERVER_HOST = "dest.server.host";
-  public static final String UPDATE_SERVER_HOST = "update.server.host.header";
-
   public static final String HOST = "host";
 
-  private boolean updateHostHeader;
-
-  private String newHost;
-
-  private IServerConfiguration serverConfiguration;
-
-  @Autowired
-  public HeaderProcessorImpl(IServerConfiguration serverConfiguration) {
-    this.serverConfiguration = serverConfiguration;
-  }
+//  @Autowired
+//  public HeaderProcessorImpl(IServerConfiguration serverConfiguration) {
+//    this.serverConfiguration = serverConfiguration;
+//  }
 
   @Override
-  public void writeHeader(byte[] data, OutputStream outputStream, HttpHeaderContext httpHeaderContext) throws Exception {
-
-    newHost = serverConfiguration.getProperty(DEST_SERVER_HOST);
-    updateHostHeader = serverConfiguration.getBooleanProperty(UPDATE_SERVER_HOST);
+  public void writeHeader(byte[] data, OutputStream outputStream,
+                          HttpHeaderContext httpHeaderContext,
+                          StreamContext streamContext) throws Exception {
 
     String line = new String(data).toLowerCase();
     String headerKey = HeaderUtils.getHeaderName(line);
@@ -64,8 +55,8 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
         break;
 
       case HOST:
-        if (this.updateHostHeader) {
-          updatedHeader = String.format("host: %s", newHost);
+        if (streamContext.isUpdateHostHeader()) {
+          updatedHeader = String.format("host: %s", streamContext.getNewHostName());
         }
         break;
 
