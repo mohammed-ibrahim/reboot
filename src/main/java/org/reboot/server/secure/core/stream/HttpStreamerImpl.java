@@ -66,8 +66,8 @@ public class HttpStreamerImpl implements IHttpStreamer {
       int chunkSize = Integer.parseInt(chunkSizeHexString, 16);
       log.info("Chunk size: {}", chunkSize);
 
-      streamHandle.getOutputStream().write(lineBytes);
-      streamHandle.getOutputStream().write(CRLF.getBytes());
+      addBytesToOutputAndTrace(streamHandle, lineBytes);
+      addNewLineToOutputAndTrace(streamHandle);
 
       if (chunkSize == 0) {
 //        this.outputStream.write(CRLF.getBytes());
@@ -75,7 +75,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
       }
 
       this.streamBytes(chunkSize, streamHandle, sessionBuffer);
-      streamHandle.getOutputStream().write(CRLF.getBytes());
+      addNewLineToOutputAndTrace(streamHandle);
 
       readLineBytes(streamHandle.getInputStream(), sessionBuffer);
       lineBytes = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
@@ -103,7 +103,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
       if (read > 0) {
         numBytesRead += read;
-        streamHandle.getOutputStream().write(sessionBuffer, 0, read);
+        addBytesToOutputAndTraceWithStartAndEnd(streamHandle, sessionBuffer, 0, read);
       }
     }
 
@@ -127,21 +127,42 @@ public class HttpStreamerImpl implements IHttpStreamer {
       log.debug("Read line: {}", new String(data));
       if (data.length < 1) {
         //as an empty line was read from input, empty line must be written to output.
-        streamHandle.getOutputStream().write(CRLF.getBytes());
+        addNewLineToOutputAndTrace(streamHandle);
         break;
       }
 
       HeaderProcessingResponse headerProcessingResponse = this.headerProcessor.processHeader(data, httpHeaderContext, streamContext);
-
-      if (headerProcessingResponse.isUpdateRequired()) {
-        streamHandle.getOutputStream().write(headerProcessingResponse.getUpdatedContent());
-      } else {
-        streamHandle.getOutputStream().write(data);
-      }
-      streamHandle.getOutputStream().write(CRLF.getBytes());
+      writeToOutputAndTrace(streamHandle, data, headerProcessingResponse);
+      addNewLineToOutputAndTrace(streamHandle);
     }
 
     return httpHeaderContext;
+  }
+
+  public void writeToOutputAndTrace(StreamHandle streamHandle,
+                                    byte[] data,
+                                    HeaderProcessingResponse headerProcessingResponse) throws Exception {
+
+    if (headerProcessingResponse.isUpdateRequired()) {
+      streamHandle.getOutputStream().write(headerProcessingResponse.getUpdatedContent());
+    } else {
+      streamHandle.getOutputStream().write(data);
+    }
+  }
+
+  private void addNewLineToOutputAndTrace(StreamHandle streamHandle) throws Exception {
+    streamHandle.getOutputStream().write(CRLF.getBytes());
+  }
+
+  private void addBytesToOutputAndTrace(StreamHandle streamHandle, byte[] data) throws Exception {
+    streamHandle.getOutputStream().write(data);
+  }
+
+  private void addBytesToOutputAndTraceWithStartAndEnd(StreamHandle streamHandle,
+                                                       byte[] sessionBuffer,
+                                                       int start,
+                                                       int end) throws Exception {
+    streamHandle.getOutputStream().write(sessionBuffer, start, end);
   }
 
   public byte[] readLineBytes(InputStream inputStream, byte[] sessionBuffer) throws IOException {
