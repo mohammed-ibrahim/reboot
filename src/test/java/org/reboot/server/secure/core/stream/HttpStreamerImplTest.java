@@ -24,7 +24,7 @@ public class HttpStreamerImplTest {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(input.getBytes());
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig());
-    StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream);
+    StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream, null);
     httpStreamer.stream(streamHandle);
 
     String output = new String(byteArrayOutputStream.toByteArray());
@@ -41,7 +41,7 @@ public class HttpStreamerImplTest {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(expected.getBytes());
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig());
-    StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream);
+    StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream, null);
     httpStreamer.stream(streamHandle);
 
     String actual = new String(byteArrayOutputStream.toByteArray());
@@ -54,7 +54,7 @@ public class HttpStreamerImplTest {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     InputStream resourceAsStream = this.getClass().getResourceAsStream("/chunked-sample-1.txt");
     HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig());
-    StreamHandle streamHandle = new StreamHandle(resourceAsStream, byteArrayOutputStream);
+    StreamHandle streamHandle = new StreamHandle(resourceAsStream, byteArrayOutputStream, null);
     httpStreamer.stream(streamHandle);
 
     String input = IOUtils.toString(this.getClass().getResourceAsStream("/chunked-sample-1.txt"));

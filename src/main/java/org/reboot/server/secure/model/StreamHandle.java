@@ -9,9 +9,12 @@ public class StreamHandle {
 
   private OutputStream outputStream;
 
-  public StreamHandle(InputStream inputStream, OutputStream outputStream) {
+  private TraceContext traceContext;
+
+  public StreamHandle(InputStream inputStream, OutputStream outputStream, TraceContext traceContext) {
     this.inputStream = inputStream;
     this.outputStream = outputStream;
+    this.traceContext = traceContext;
   }
 
   public InputStream getInputStream() {
@@ -20,5 +23,9 @@ public class StreamHandle {
 
   public OutputStream getOutputStream() {
     return outputStream;
+  }
+
+  public TraceContext getTraceContext() {
+    return traceContext;
   }
 }

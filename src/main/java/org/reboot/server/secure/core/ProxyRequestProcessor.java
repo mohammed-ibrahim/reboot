@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -29,7 +27,7 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
     Stopwatch streamForward = Stopwatch.createStarted();
     try {
       log.debug("Starting to read from client");
-      streamForwardRequest(sessionHandle.getSource().getInputStream(), sessionHandle.getDestination().getOutputStream());
+      streamForwardRequest(sessionHandle);
       streamForward.stop();
       log.debug("Forwarded request");
     } catch (Exception e) {
@@ -39,7 +37,7 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
     Stopwatch streamResponse = Stopwatch.createStarted();
     try {
       log.debug("Starting stream response");
-      streamResponse(sessionHandle.getDestination().getInputStream(), sessionHandle.getSource().getOutputStream());
+      streamResponse(sessionHandle);
       streamResponse.stop();
       log.debug("Stream response completed");
     } catch (Exception e) {
@@ -56,11 +54,11 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
     sessionHandle.getDestination().close();
   }
 
-  private void streamForwardRequest(InputStream inputStream, OutputStream outputStream) throws Exception {
-    httpStreamer.stream(new StreamHandle(inputStream, outputStream));
+  private void streamForwardRequest(SessionHandle sessionHandle) throws Exception {
+    httpStreamer.stream(new StreamHandle(sessionHandle.getSource().getInputStream(), sessionHandle.getDestination().getOutputStream(), sessionHandle.getTraceContext()));
   }
 
-  private void streamResponse(InputStream inputStream, OutputStream outputStream) throws Exception {
-    httpStreamer.stream(new StreamHandle(inputStream, outputStream));
+  private void streamResponse(SessionHandle sessionHandle) throws Exception {
+    httpStreamer.stream(new StreamHandle(sessionHandle.getDestination().getInputStream(), sessionHandle.getSource().getOutputStream(), sessionHandle.getTraceContext()));
   }
 }
