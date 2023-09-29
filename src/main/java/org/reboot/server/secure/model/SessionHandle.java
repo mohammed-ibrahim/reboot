@@ -8,9 +8,12 @@ public class SessionHandle {
 
   private Socket destination;
 
-  public SessionHandle(Socket source, Socket destination) {
+  private TraceContext traceContext;
+
+  public SessionHandle(Socket source, Socket destination, TraceContext traceContext) {
     this.source = source;
     this.destination = destination;
+    this.traceContext = traceContext;
   }
 
   public Socket getSource() {
@@ -27,5 +30,9 @@ public class SessionHandle {
 
   public void setDestination(Socket destination) {
     this.destination = destination;
+  }
+
+  public TraceContext getTraceContext() {
+    return traceContext;
   }
 }

@@ -4,6 +4,7 @@ import org.reboot.server.secure.core.IProxyRequestProcessor;
 import org.reboot.server.secure.core.ProxyRequestProcessor;
 import org.reboot.server.secure.core.IDestinationServerSocketProvider;
 import org.reboot.server.secure.model.SessionHandle;
+import org.reboot.server.secure.model.TraceContext;
 import org.reboot.server.secure.util.IServerConfiguration;
 import org.reboot.server.secure.util.ServerConfiguration;
 import org.slf4j.Logger;
@@ -17,28 +18,21 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Service("appEntry")
 public class SockMain {
-  /*
-  TODO:
-      Make read with timeout.
-      Handle SocketClosed/Timeout exception.
-      Write async
-      Multi-part file read/write.
-      Make: StreamReader as object holder.
-   */
 
   private static Logger log = LoggerFactory.getLogger(SockMain.class);
-
-
-  public static String CRLF = "\r\n";
 
   private String serverFilePath = null;
   private String serverFilePassword = null;
@@ -96,7 +90,7 @@ public class SockMain {
   }
 
   private void processRequestAndSendResponse(Socket socket) throws Exception {
-    SessionHandle sessionHandle = new SessionHandle(socket, destinationServerSocketProvider.getDestinationSocket());
+    SessionHandle sessionHandle = new SessionHandle(socket, destinationServerSocketProvider.getDestinationSocket(), getTraceContext());
     proxyRequestProcessor.start(sessionHandle);
     proxyRequestProcessor.close(sessionHandle);
   }
@@ -111,5 +105,18 @@ public class SockMain {
     sslContext.init(keyMan.getKeyManagers(), null, null);
     SSLServerSocketFactory sslFactory = sslContext.getServerSocketFactory();
     return sslFactory;
+  }
+
+  private TraceContext getTraceContext() throws Exception {
+    boolean traceEnabled = serverConfiguration.getBooleanProperty("http.tracing.enabled");
+    OutputStream outputStream = null;
+
+    if (traceEnabled) {
+      String dataDumpDirectory = serverConfiguration.getRequiredProperty("data.dump.dir");
+      File outputFile = Paths.get(dataDumpDirectory, UUID.randomUUID().toString() + ".log").toFile();
+      outputStream = new FileOutputStream(outputFile);
+    }
+
+    return new TraceContext(outputStream);
   }
 }
