@@ -23,7 +23,7 @@ public class HeaderProcessorImplTest {
   public void canDetectContentLength() throws Exception {
     HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl();
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
-    headerProcessor.processHeader(CONTENT_LENGTH.getBytes(), httpHeaderContext, getStreamContext(NEW_HOST, false));
+    headerProcessor.processHeader(CONTENT_LENGTH.getBytes(), CONTENT_LENGTH.length(), httpHeaderContext, getStreamContext(NEW_HOST, false));
 
     assertTrue(httpHeaderContext.hasBody());
     assertEquals(httpHeaderContext.getContentLength(), 80);
@@ -35,7 +35,7 @@ public class HeaderProcessorImplTest {
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
     HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl();
 
-    headerProcessor.processHeader(TRANSFER_ENCODING.getBytes(), httpHeaderContext, getStreamContext(NEW_HOST, false));
+    headerProcessor.processHeader(TRANSFER_ENCODING.getBytes(), TRANSFER_ENCODING.length(), httpHeaderContext, getStreamContext(NEW_HOST, false));
 
     assertTrue(httpHeaderContext.hasBody());
     assertFalse(httpHeaderContext.isContentLength());
@@ -46,7 +46,7 @@ public class HeaderProcessorImplTest {
   public void canReplaceNewHost() throws Exception {
     HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl();
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
-    HeaderProcessingResponse headerProcessingResponse = headerProcessor.processHeader(OLD_HOST_HEADER.getBytes(), httpHeaderContext, getStreamContext(NEW_HOST, true));
+    HeaderProcessingResponse headerProcessingResponse = headerProcessor.processHeader(OLD_HOST_HEADER.getBytes(), OLD_HOST_HEADER.length(), httpHeaderContext, getStreamContext(NEW_HOST, true));
 
     assertFalse(httpHeaderContext.hasBody());
     assertTrue(headerProcessingResponse.isUpdateRequired());

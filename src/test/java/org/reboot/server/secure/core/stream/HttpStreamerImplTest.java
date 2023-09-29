@@ -2,7 +2,9 @@ package org.reboot.server.secure.core.stream;
 
 import org.apache.commons.io.IOUtils;
 import org.reboot.server.secure.model.StreamHandle;
+import org.reboot.server.secure.model.TraceContext;
 import org.reboot.server.secure.util.IServerConfiguration;
+import org.reboot.server.secure.util.IStreamTrace;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -23,7 +25,7 @@ public class HttpStreamerImplTest {
 
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(input.getBytes());
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig());
+    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig(), getMockTrace());
     StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream, null);
     httpStreamer.stream(streamHandle);
 
@@ -40,7 +42,7 @@ public class HttpStreamerImplTest {
 
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(expected.getBytes());
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig());
+    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig(), getMockTrace());
     StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream, null);
     httpStreamer.stream(streamHandle);
 
@@ -53,7 +55,7 @@ public class HttpStreamerImplTest {
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     InputStream resourceAsStream = this.getClass().getResourceAsStream("/chunked-sample-1.txt");
-    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig());
+    HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig(), getMockTrace());
     StreamHandle streamHandle = new StreamHandle(resourceAsStream, byteArrayOutputStream, null);
     httpStreamer.stream(streamHandle);
 
@@ -91,6 +93,35 @@ public class HttpStreamerImplTest {
       @Override
       public Optional<Integer> getPropertyAsInteger(String key) {
         return Optional.empty();
+      }
+    };
+  }
+
+  private IStreamTrace getMockTrace() {
+    return new IStreamTrace() {
+      @Override
+      public void start(TraceContext traceContext) throws Exception {
+
+      }
+
+      @Override
+      public void addTrace(TraceContext traceContext, byte[] data) throws Exception {
+
+      }
+
+      @Override
+      public void addTrace(TraceContext traceContext, byte[] data, int start, int limit) throws Exception {
+
+      }
+
+      @Override
+      public void addModifiedTrace(TraceContext traceContext, byte[] actual, int start, int limit, boolean isModified, byte[] modified) throws Exception {
+
+      }
+
+      @Override
+      public void end(TraceContext traceContext) throws Exception {
+
       }
     };
   }

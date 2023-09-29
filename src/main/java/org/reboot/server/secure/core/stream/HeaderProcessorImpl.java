@@ -32,10 +32,11 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
 
   @Override
   public HeaderProcessingResponse processHeader(byte[] data,
+                                                int limit,
                                                 HttpHeaderContext httpHeaderContext,
                                                 StreamContext streamContext) throws Exception {
 
-    String line = new String(data).toLowerCase();
+    String line = new String(data, 0, limit).toLowerCase();
     String headerKey = HeaderUtils.getHeaderName(line);
 
     String updatedHeader = null;

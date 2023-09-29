@@ -8,6 +8,6 @@ import java.io.OutputStream;
 
 public interface IHeaderProcessor {
 
-  HeaderProcessingResponse processHeader(byte[] data, HttpHeaderContext httpHeaderContext, StreamContext streamContext) throws Exception ;
+  HeaderProcessingResponse processHeader(byte[] data, int limit, HttpHeaderContext httpHeaderContext, StreamContext streamContext) throws Exception ;
 
 }
