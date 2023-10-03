@@ -67,14 +67,26 @@ public class HttpStreamerImpl implements IHttpStreamer {
     //TODO: Truncate the extension data for chunk-size header.
     int numBytesRead = readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
     while (numBytesRead > 0) {
+      //At this place chunkSize is already read in sessionBuffer.
       String chunkSizeHexString = new String(sessionBuffer, 0, numBytesRead);
       int chunkSize = Integer.parseInt(chunkSizeHexString, 16);
       log.info("Chunk size: {}", chunkSize);
 
+      //Write the chunkSize to sessionBuffer
       addBytesToOutputAndTraceWithStartAndEnd(streamHandle, sessionBuffer, 0, numBytesRead);
       addNewLineToOutputAndTrace(streamHandle);
 
       if (chunkSize == 0) {
+        /*
+        There will be two new lines after last chunk (chunkSize = 0)
+        ref1: https://datatracker.ietf.org/doc/html/rfc9112#section-7.1
+        ref2: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Transfer-Encoding
+
+        line immediately after 0 chunkSize is already read and written before this if block.
+        Next line is read and written after the below comment.
+         */
+        readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
+        addNewLineToOutputAndTrace(streamHandle);
         return;
       }
 
