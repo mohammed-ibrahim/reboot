@@ -3,6 +3,7 @@ package org.reboot.server.secure;
 import org.reboot.server.secure.core.IProxyRequestProcessor;
 import org.reboot.server.secure.core.ProxyRequestProcessor;
 import org.reboot.server.secure.core.IDestinationServerSocketProvider;
+import org.reboot.server.secure.model.InboundSocket;
 import org.reboot.server.secure.model.SessionHandle;
 import org.reboot.server.secure.model.TraceContext;
 import org.reboot.server.secure.util.IServerConfiguration;
@@ -90,7 +91,10 @@ public class SockMain {
   }
 
   private void processRequestAndSendResponse(Socket socket) throws Exception {
-    SessionHandle sessionHandle = new SessionHandle(socket, destinationServerSocketProvider.getDestinationSocket(), getTraceContext());
+    SessionHandle sessionHandle = new SessionHandle(new InboundSocket(socket),
+        destinationServerSocketProvider.getDestinationSocket(),
+        getTraceContext());
+
     proxyRequestProcessor.start(sessionHandle);
     proxyRequestProcessor.close(sessionHandle);
   }

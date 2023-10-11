@@ -4,32 +4,24 @@ import java.net.Socket;
 
 public class SessionHandle {
 
-  private Socket source;
+  private InboundSocket source;
 
-  private Socket destination;
+  private ManagedSocket destination;
 
   private TraceContext traceContext;
 
-  public SessionHandle(Socket source, Socket destination, TraceContext traceContext) {
+  public SessionHandle(InboundSocket source, ManagedSocket destination, TraceContext traceContext) {
     this.source = source;
     this.destination = destination;
     this.traceContext = traceContext;
   }
 
-  public Socket getSource() {
+  public InboundSocket getSource() {
     return source;
   }
 
-  public void setSource(Socket source) {
-    this.source = source;
-  }
-
-  public Socket getDestination() {
+  public ManagedSocket getDestination() {
     return destination;
-  }
-
-  public void setDestination(Socket destination) {
-    this.destination = destination;
   }
 
   public TraceContext getTraceContext() {

@@ -1,8 +1,10 @@
 package org.reboot.server.secure.core;
 
-import java.net.Socket;
+import org.reboot.server.secure.model.ManagedSocket;
 
 public interface IDestinationServerSocketProvider {
 
-  Socket getDestinationSocket() throws Exception;
+  ManagedSocket getDestinationSocket() throws Exception;
+
+  void releaseConnection(ManagedSocket managedSocket);
 }

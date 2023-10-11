@@ -50,15 +50,15 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
   }
 
   public void close(SessionHandle sessionHandle) throws Exception {
-    sessionHandle.getSource().close();
-    sessionHandle.getDestination().close();
+    sessionHandle.getSource().getSocket().close();
+//    sessionHandle.getDestination().close();
   }
 
   private void streamForwardRequest(SessionHandle sessionHandle) throws Exception {
-    httpStreamer.stream(new StreamHandle(sessionHandle.getSource().getInputStream(), sessionHandle.getDestination().getOutputStream(), sessionHandle.getTraceContext()));
+    httpStreamer.stream(new StreamHandle(sessionHandle.getSource().getSocket().getInputStream(), sessionHandle.getDestination().getSocket().getOutputStream(), sessionHandle.getTraceContext()));
   }
 
   private void streamResponse(SessionHandle sessionHandle) throws Exception {
-    httpStreamer.stream(new StreamHandle(sessionHandle.getDestination().getInputStream(), sessionHandle.getSource().getOutputStream(), sessionHandle.getTraceContext()));
+    httpStreamer.stream(new StreamHandle(sessionHandle.getDestination().getSocket().getInputStream(), sessionHandle.getSource().getSocket().getOutputStream(), sessionHandle.getTraceContext()));
   }
 }
