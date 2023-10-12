@@ -31,7 +31,8 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
       streamForward.stop();
       log.debug("Forwarded request");
     } catch (Exception e) {
-      log.error("Error: ", e);
+      log.error("Error during streaming forward, managed connectionId: {}", sessionHandle.getDestination().getConnectionId(), e);
+      throw new RuntimeException("Error during streaming forward.");
     }
 
     Stopwatch streamResponse = Stopwatch.createStarted();
@@ -41,7 +42,8 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
       streamResponse.stop();
       log.debug("Stream response completed");
     } catch (Exception e) {
-      log.error("Error: ", e);
+      log.error("Error during returning, managed connectionId: {}", sessionHandle.getDestination().getConnectionId(), e);
+      throw new RuntimeException("Error during returning.");
     }
 
     log.info("Forward stream time: {} ms, response stream time: {} ms",

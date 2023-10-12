@@ -87,6 +87,7 @@ public class SockMain {
       processRequestAndSendResponse(socket);
     } catch (Exception e) {
       e.printStackTrace();
+      log.error("There was a problem: ", e);
     }
   }
 
@@ -97,6 +98,7 @@ public class SockMain {
 
     proxyRequestProcessor.start(sessionHandle);
     proxyRequestProcessor.close(sessionHandle);
+    destinationServerSocketProvider.releaseConnection(sessionHandle.getDestination());
   }
 
 

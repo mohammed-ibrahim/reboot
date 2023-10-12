@@ -7,4 +7,6 @@ public interface IDestinationServerSocketProvider {
   ManagedSocket getDestinationSocket() throws Exception;
 
   void releaseConnection(ManagedSocket managedSocket);
+
+  void deleteConnection(ManagedSocket managedSocket);
 }

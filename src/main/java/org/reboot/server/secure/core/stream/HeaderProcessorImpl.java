@@ -2,6 +2,7 @@ package org.reboot.server.secure.core.stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.reboot.server.secure.model.HeaderProcessingResponse;
+import org.reboot.server.secure.model.HttpConnection;
 import org.reboot.server.secure.model.HttpHeaderContext;
 import org.reboot.server.secure.model.InvalidHeaderException;
 import org.reboot.server.secure.model.StreamContext;
@@ -13,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.net.HttpURLConnection;
+
 
 @Component
 public class HeaderProcessorImpl implements IHeaderProcessor {
@@ -22,6 +25,9 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
   public static final String CONTENT_LENGTH = "content-length";
 
   public static final String TRANSFER_ENCODING = "transfer-encoding";
+  public static final String CONNECTION = "connection";
+  public static final String CONNECTION_KEEP_ALIVE = "keep-alive";
+  public static final String CONNECTION_CLOSE = "close";
 
   public static final String HOST = "host";
 
@@ -61,6 +67,10 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
         }
         break;
 
+      case CONNECTION:
+        httpHeaderContext.setHttpConnection(parseConnectionHeader(line));
+        break;
+
       default:
         log.trace("Not processing header: {}", headerKey);
     }
@@ -70,6 +80,21 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
     } else {
       return new HeaderProcessingResponse(false, null);
     }
+  }
+
+  private HttpConnection parseConnectionHeader(String line) {
+    String headerValue = HeaderUtils.getHeaderValue(line);
+
+    if (CONNECTION_KEEP_ALIVE.equalsIgnoreCase(headerValue)) {
+      return HttpConnection.KEEP_ALIVE;
+    }
+
+    if (CONNECTION_CLOSE.equalsIgnoreCase(headerValue)) {
+      return HttpConnection.CLOSE;
+    }
+
+    log.error("Not supported header value");
+    throw new RuntimeException("Not implemented: " + line);
   }
 
   private int parseContentLength(String line) {

@@ -8,6 +8,12 @@ public class HttpHeaderContext {
 
   private boolean isChunkedPacket;
 
+  private HttpConnection httpConnection;
+
+  public HttpHeaderContext() {
+    this.httpConnection = HttpConnection.NOT_SPECIFIED;
+  }
+
   public boolean hasBody() {
     return this.isContentLength || this.isChunkedPacket;
   }
@@ -34,5 +40,13 @@ public class HttpHeaderContext {
 
   public void setChunkedPacket(boolean chunkedPacket) {
     isChunkedPacket = chunkedPacket;
+  }
+
+  public HttpConnection getHttpConnection() {
+    return httpConnection;
+  }
+
+  public void setHttpConnection(HttpConnection httpConnection) {
+    this.httpConnection = httpConnection;
   }
 }

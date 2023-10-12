@@ -1,12 +1,17 @@
 package org.reboot.server.secure.core;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.reboot.server.secure.model.ManagedSocket;
 import org.reboot.server.secure.model.SocketState;
 import org.reboot.server.secure.util.IServerConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.net.ssl.SSLSocket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,6 +22,7 @@ import java.util.Optional;
 @Component
 public class DefaultDestinationServerSocketProvider implements IDestinationServerSocketProvider {
 
+  private static Logger log = LoggerFactory.getLogger(DefaultDestinationServerSocketProvider.class);
 
   public static final String DEST_SERVER_HOST = "dest.server.host";
   private String host;
@@ -56,12 +62,16 @@ public class DefaultDestinationServerSocketProvider implements IDestinationServe
           managedSocket = idleConnection.get();
           managedSocket.setSocketState(SocketState.IN_USE);
         } else {
-          managedSocket = new ManagedSocket(connectionFactory.getNewConnection(host, port), SocketState.IN_USE);
+          Pair<String, SSLSocket> newConnection = connectionFactory.getNewConnection(host, port);
+          log.info("Creating new connection as there are no idle connections, new connection id: {}", newConnection.getLeft());
+          managedSocket = new ManagedSocket(newConnection.getLeft(), newConnection.getRight(), SocketState.IN_USE);
           this.socketMap.get(key).add(managedSocket);
         }
         return managedSocket;
       } else {
-        ManagedSocket managedSocket = new ManagedSocket(connectionFactory.getNewConnection(host, port), SocketState.IN_USE);
+        Pair<String, SSLSocket> newConnection = connectionFactory.getNewConnection(host, port);
+        log.info("No existing connections for the host: {} hence creating new connection: {}", host, newConnection.getLeft());
+        ManagedSocket managedSocket = new ManagedSocket(newConnection.getLeft(), newConnection.getRight(), SocketState.IN_USE);
         this.socketMap.put(key, new ArrayList(Collections.singleton(managedSocket)));
         return managedSocket;
       }
@@ -72,7 +82,16 @@ public class DefaultDestinationServerSocketProvider implements IDestinationServe
   @Override
   public void releaseConnection(ManagedSocket managedSocket) {
     synchronized (lock) {
+      log.info("Releasing connection: {}", managedSocket.getConnectionId());
       managedSocket.setSocketState(SocketState.IDLE);
+    }
+  }
+
+  public void deleteConnection(ManagedSocket managedSocket) {
+    synchronized (lock) {
+      IOUtils.closeQuietly(managedSocket.getSocket());
+      log.info("Deleting the connection: {}", managedSocket.getConnectionId());
+      managedSocket.setSocketState(SocketState.CLOSED);
     }
   }
 

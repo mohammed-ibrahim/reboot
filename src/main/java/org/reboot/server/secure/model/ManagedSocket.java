@@ -4,11 +4,14 @@ import java.net.Socket;
 
 public class ManagedSocket {
 
+  private String connectionId;
+
   private Socket socket;
 
   private SocketState socketState;
 
-  public ManagedSocket(Socket socket, SocketState socketState) {
+  public ManagedSocket(String connectionId, Socket socket, SocketState socketState) {
+    this.connectionId = connectionId;
     this.socket = socket;
     this.socketState = socketState;
   }
@@ -23,5 +26,9 @@ public class ManagedSocket {
 
   public void setSocketState(SocketState socketState) {
     this.socketState = socketState;
+  }
+
+  public String getConnectionId() {
+    return connectionId;
   }
 }
