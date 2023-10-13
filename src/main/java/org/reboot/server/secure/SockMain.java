@@ -3,6 +3,8 @@ package org.reboot.server.secure;
 import org.reboot.server.secure.core.IProxyRequestProcessor;
 import org.reboot.server.secure.core.IDestinationServerSocketProvider;
 import org.reboot.server.secure.model.InboundSocket;
+import org.reboot.server.secure.model.ManagedSocket;
+import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.model.SessionHandle;
 import org.reboot.server.secure.model.TraceContext;
 import org.reboot.server.secure.server.IServerSocketProvider;
@@ -28,8 +30,8 @@ public class SockMain {
 
   private static Logger log = LoggerFactory.getLogger(SockMain.class);
 
-  private String serverFilePath = null;
-  private String serverFilePassword = null;
+  public static final String DEST_SERVER_HOST = "dest.server.host";
+  public static final String UPDATE_SERVER_HOST = "update.server.host.header";
 
   private IServerConfiguration serverConfiguration;
 
@@ -80,11 +82,14 @@ public class SockMain {
   }
 
   private void processRequestAndSendResponse(Socket socket) throws Exception {
-    SessionHandle sessionHandle = new SessionHandle(new InboundSocket(socket),
-        destinationServerSocketProvider.getDestinationSocket(),
-        getTraceContext());
+    ManagedSocket managedSocket = destinationServerSocketProvider.getDestinationSocket();
+    RequestContext requestContext = new RequestContext();
+    requestContext.setDestinationHostName(managedSocket.getHost());
+    requestContext.setUpdateHostHeader(serverConfiguration.getBooleanProperty(UPDATE_SERVER_HOST));
 
-    proxyRequestProcessor.start(sessionHandle);
+    SessionHandle sessionHandle = new SessionHandle(new InboundSocket(socket), managedSocket, getTraceContext());
+
+    proxyRequestProcessor.start(requestContext, sessionHandle);
     proxyRequestProcessor.close(sessionHandle);
     destinationServerSocketProvider.releaseConnection(sessionHandle.getDestination());
   }

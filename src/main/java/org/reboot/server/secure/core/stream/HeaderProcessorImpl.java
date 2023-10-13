@@ -5,13 +5,10 @@ import org.reboot.server.secure.model.HeaderProcessingResponse;
 import org.reboot.server.secure.model.HttpConnection;
 import org.reboot.server.secure.model.HttpHeaderContext;
 import org.reboot.server.secure.model.InvalidHeaderException;
-import org.reboot.server.secure.model.StreamContext;
+import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.util.HeaderUtils;
-import org.reboot.server.secure.util.IServerConfiguration;
-import org.reboot.server.secure.util.ServerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.HttpURLConnection;
@@ -40,7 +37,7 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
   public HeaderProcessingResponse processHeader(byte[] data,
                                                 int limit,
                                                 HttpHeaderContext httpHeaderContext,
-                                                StreamContext streamContext) throws Exception {
+                                                RequestContext requestContext) throws Exception {
 
     String line = new String(data, 0, limit).toLowerCase();
     String headerKey = HeaderUtils.getHeaderName(line);
@@ -62,8 +59,8 @@ public class HeaderProcessorImpl implements IHeaderProcessor {
         break;
 
       case HOST:
-        if (streamContext.isUpdateHostHeader()) {
-          updatedHeader = String.format("host: %s", streamContext.getNewHostName());
+        if (requestContext.isUpdateHostHeader()) {
+          updatedHeader = String.format("host: %s", requestContext.getDestinationHostName());
         }
         break;
 

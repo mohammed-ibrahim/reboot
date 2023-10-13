@@ -2,10 +2,8 @@ package org.reboot.server.secure.core.stream;
 
 import org.reboot.server.secure.model.HeaderProcessingResponse;
 import org.reboot.server.secure.model.HttpHeaderContext;
-import org.reboot.server.secure.model.StreamContext;
+import org.reboot.server.secure.model.RequestContext;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayOutputStream;
 
 import static org.testng.Assert.*;
 
@@ -23,7 +21,7 @@ public class HeaderProcessorImplTest {
   public void canDetectContentLength() throws Exception {
     HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl();
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
-    headerProcessor.processHeader(CONTENT_LENGTH.getBytes(), CONTENT_LENGTH.length(), httpHeaderContext, getStreamContext(NEW_HOST, false));
+    headerProcessor.processHeader(CONTENT_LENGTH.getBytes(), CONTENT_LENGTH.length(), httpHeaderContext, getRequestContext(NEW_HOST, false));
 
     assertTrue(httpHeaderContext.hasBody());
     assertEquals(httpHeaderContext.getContentLength(), 80);
@@ -35,7 +33,7 @@ public class HeaderProcessorImplTest {
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
     HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl();
 
-    headerProcessor.processHeader(TRANSFER_ENCODING.getBytes(), TRANSFER_ENCODING.length(), httpHeaderContext, getStreamContext(NEW_HOST, false));
+    headerProcessor.processHeader(TRANSFER_ENCODING.getBytes(), TRANSFER_ENCODING.length(), httpHeaderContext, getRequestContext(NEW_HOST, false));
 
     assertTrue(httpHeaderContext.hasBody());
     assertFalse(httpHeaderContext.isContentLength());
@@ -46,42 +44,19 @@ public class HeaderProcessorImplTest {
   public void canReplaceNewHost() throws Exception {
     HeaderProcessorImpl headerProcessor = new HeaderProcessorImpl();
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
-    HeaderProcessingResponse headerProcessingResponse = headerProcessor.processHeader(OLD_HOST_HEADER.getBytes(), OLD_HOST_HEADER.length(), httpHeaderContext, getStreamContext(NEW_HOST, true));
+    HeaderProcessingResponse headerProcessingResponse = headerProcessor.processHeader(OLD_HOST_HEADER.getBytes(), OLD_HOST_HEADER.length(), httpHeaderContext, getRequestContext(NEW_HOST, true));
 
     assertFalse(httpHeaderContext.hasBody());
     assertTrue(headerProcessingResponse.isUpdateRequired());
     assertEquals(NEW_HOST_HEADER, new String(headerProcessingResponse.getUpdatedContent()));
   }
 
-  private StreamContext getStreamContext(String host, boolean updateHostHeader) {
+  private RequestContext getRequestContext(String host, boolean updateHostHeader) {
 
-    return new StreamContext(host, updateHostHeader);
-//    return new IServerConfiguration() {
-//      @Override
-//      public Boolean getBooleanProperty(String key) {
-//        return updateHostHeader;
-//      }
-//
-//      @Override
-//      public String getProperty(String key) {
-//        return host;
-//      }
-//
-//      @Override
-//      public String getRequiredProperty(String key) {
-//        return null;
-//      }
-//
-//      @Override
-//      public String getProperty(String key, boolean failIfNotConfigured) {
-//        return null;
-//      }
-//
-//      @Override
-//      public Optional<Integer> getPropertyAsInteger(String key) {
-//        return Optional.empty();
-//      }
-//    };
+    RequestContext requestContext = new RequestContext();
+    requestContext.setDestinationHostName(host);
+    requestContext.setUpdateHostHeader(updateHostHeader);
+    return requestContext;
   }
 
 }

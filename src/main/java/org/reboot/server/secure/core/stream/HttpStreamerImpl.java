@@ -2,7 +2,7 @@ package org.reboot.server.secure.core.stream;
 
 import org.reboot.server.secure.model.HeaderProcessingResponse;
 import org.reboot.server.secure.model.HttpHeaderContext;
-import org.reboot.server.secure.model.StreamContext;
+import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.model.StreamHandle;
 import org.reboot.server.secure.util.IServerConfiguration;
 import org.reboot.server.secure.util.IStreamTrace;
@@ -38,15 +38,12 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
   @Override
-  public void stream(StreamHandle streamHandle) throws Exception {
+  public void stream(RequestContext requestContext, StreamHandle streamHandle) throws Exception {
     streamTrace.start(streamHandle.getTraceContext());
-    String newHost = serverConfiguration.getProperty(DEST_SERVER_HOST);
-    boolean updateHostHeader = serverConfiguration.getBooleanProperty(UPDATE_SERVER_HOST);
-    StreamContext streamContext = new StreamContext(newHost, updateHostHeader);
 
-    log.info("Reading headers, host modification allowed: {}", updateHostHeader);
+    log.info("Reading headers, host modification allowed: {}", requestContext.isUpdateHostHeader());
     byte[] sessionBuffer = new byte[16*1024];
-    HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, streamContext);
+    HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, requestContext);
     log.info("Reading headers complete");
 
     if (httpHeaderContext.hasBody()) {
@@ -136,7 +133,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
 
-  private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer, StreamContext streamContext) throws Exception {
+  private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer, RequestContext requestContext) throws Exception {
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
     while (true) {
 //      byte[] data = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
@@ -149,7 +146,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
         break;
       }
 
-      HeaderProcessingResponse headerProcessingResponse = this.headerProcessor.processHeader(sessionBuffer, numBytesRead, httpHeaderContext, streamContext);
+      HeaderProcessingResponse headerProcessingResponse = this.headerProcessor.processHeader(sessionBuffer, numBytesRead, httpHeaderContext, requestContext);
       writeToOutputAndTrace(streamHandle, sessionBuffer, numBytesRead, headerProcessingResponse);
       addNewLineToOutputAndTrace(streamHandle);
     }

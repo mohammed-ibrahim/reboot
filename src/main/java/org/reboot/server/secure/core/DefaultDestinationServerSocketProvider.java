@@ -64,14 +64,14 @@ public class DefaultDestinationServerSocketProvider implements IDestinationServe
         } else {
           Pair<String, SSLSocket> newConnection = connectionFactory.getNewConnection(host, port);
           log.info("Creating new connection as there are no idle connections, new connection id: {}", newConnection.getLeft());
-          managedSocket = new ManagedSocket(newConnection.getLeft(), newConnection.getRight(), SocketState.IN_USE);
+          managedSocket = new ManagedSocket(newConnection.getLeft(), newConnection.getRight(), host, port, SocketState.IN_USE);
           this.socketMap.get(key).add(managedSocket);
         }
         return managedSocket;
       } else {
         Pair<String, SSLSocket> newConnection = connectionFactory.getNewConnection(host, port);
         log.info("No existing connections for the host: {} hence creating new connection: {}", host, newConnection.getLeft());
-        ManagedSocket managedSocket = new ManagedSocket(newConnection.getLeft(), newConnection.getRight(), SocketState.IN_USE);
+        ManagedSocket managedSocket = new ManagedSocket(newConnection.getLeft(), newConnection.getRight(), host, port, SocketState.IN_USE);
         this.socketMap.put(key, new ArrayList(Collections.singleton(managedSocket)));
         return managedSocket;
       }

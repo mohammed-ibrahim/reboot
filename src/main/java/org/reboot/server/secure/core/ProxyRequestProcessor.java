@@ -2,6 +2,7 @@ package org.reboot.server.secure.core;
 
 import com.google.common.base.Stopwatch;
 import org.reboot.server.secure.core.stream.IHttpStreamer;
+import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.model.SessionHandle;
 import org.reboot.server.secure.model.StreamHandle;
 import org.slf4j.Logger;
@@ -22,12 +23,12 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
     this.httpStreamer = httpStreamer;
   }
 
-  public void start(SessionHandle sessionHandle) throws Exception {
+  public void start(RequestContext requestContext, SessionHandle sessionHandle) throws Exception {
 
     Stopwatch streamForward = Stopwatch.createStarted();
     try {
       log.debug("Starting to read from client");
-      streamForwardRequest(sessionHandle);
+      streamForwardRequest(requestContext, sessionHandle);
       streamForward.stop();
       log.debug("Forwarded request");
     } catch (Exception e) {
@@ -38,7 +39,7 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
     Stopwatch streamResponse = Stopwatch.createStarted();
     try {
       log.debug("Starting stream response");
-      streamResponse(sessionHandle);
+      streamResponse(requestContext, sessionHandle);
       streamResponse.stop();
       log.debug("Stream response completed");
     } catch (Exception e) {
@@ -56,11 +57,20 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
 //    sessionHandle.getDestination().close();
   }
 
-  private void streamForwardRequest(SessionHandle sessionHandle) throws Exception {
-    httpStreamer.stream(new StreamHandle(sessionHandle.getSource().getSocket().getInputStream(), sessionHandle.getDestination().getSocket().getOutputStream(), sessionHandle.getTraceContext()));
+  private void streamForwardRequest(RequestContext requestContext, SessionHandle sessionHandle) throws Exception {
+    StreamHandle streamHandle = new StreamHandle(
+        sessionHandle.getSource().getSocket().getInputStream(),
+        sessionHandle.getDestination().getSocket().getOutputStream(),
+        sessionHandle.getTraceContext());
+
+    httpStreamer.stream(requestContext, streamHandle);
   }
 
-  private void streamResponse(SessionHandle sessionHandle) throws Exception {
-    httpStreamer.stream(new StreamHandle(sessionHandle.getDestination().getSocket().getInputStream(), sessionHandle.getSource().getSocket().getOutputStream(), sessionHandle.getTraceContext()));
+  private void streamResponse(RequestContext requestContext, SessionHandle sessionHandle) throws Exception {
+    StreamHandle streamHandle = new StreamHandle(sessionHandle.getDestination().getSocket().getInputStream(),
+        sessionHandle.getSource().getSocket().getOutputStream(),
+        sessionHandle.getTraceContext());
+
+    httpStreamer.stream(requestContext, streamHandle);
   }
 }
