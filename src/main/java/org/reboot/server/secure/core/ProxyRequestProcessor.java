@@ -1,21 +1,31 @@
 package org.reboot.server.secure.core;
 
 import com.google.common.base.Stopwatch;
+import org.apache.commons.io.IOUtils;
 import org.reboot.server.secure.core.stream.IHttpStreamer;
+import org.reboot.server.secure.model.ConnectionState;
 import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.model.SessionHandle;
 import org.reboot.server.secure.model.StreamHandle;
+import org.reboot.server.secure.model.StreamResponse;
+import org.reboot.server.secure.model.StreamType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Component
 public class ProxyRequestProcessor implements IProxyRequestProcessor {
 
+  private static final boolean REQUEST_STREAM = true;
+  private static final boolean RESPONSE_STREAM = false;
   private static Logger log = LoggerFactory.getLogger(ProxyRequestProcessor.class);
+
+  private static final ExecutorService executorService = Executors.newCachedThreadPool();
 
   private IHttpStreamer httpStreamer;
   @Autowired
@@ -25,52 +35,61 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
 
   public void start(RequestContext requestContext, SessionHandle sessionHandle) throws Exception {
 
-    Stopwatch streamForward = Stopwatch.createStarted();
-    try {
-      log.debug("Starting to read from client");
-      streamForwardRequest(requestContext, sessionHandle);
-      streamForward.stop();
-      log.debug("Forwarded request");
-    } catch (Exception e) {
-      log.error("Error during streaming forward, managed connectionId: {}", sessionHandle.getDestination().getConnectionId(), e);
-      throw new RuntimeException("Error during streaming forward.");
-    }
+    executorService.submit(() -> {
+      safeStreamForwardRequest(requestContext, sessionHandle);
+    });
 
-    Stopwatch streamResponse = Stopwatch.createStarted();
-    try {
-      log.debug("Starting stream response");
-      streamResponse(requestContext, sessionHandle);
-      streamResponse.stop();
-      log.debug("Stream response completed");
-    } catch (Exception e) {
-      log.error("Error during returning, managed connectionId: {}", sessionHandle.getDestination().getConnectionId(), e);
-      throw new RuntimeException("Error during returning.");
-    }
+    executorService.submit(() -> {
+      safeStreamResponse(requestContext, sessionHandle);
+    });
 
-    log.info("Forward stream time: {} ms, response stream time: {} ms",
-        streamForward.elapsed(TimeUnit.MILLISECONDS),
-        streamResponse.elapsed(TimeUnit.MILLISECONDS));
   }
 
   public void close(SessionHandle sessionHandle) throws Exception {
     sessionHandle.getSource().getSocket().close();
-//    sessionHandle.getDestination().close();
+  }
+
+  private void safeStreamForwardRequest(RequestContext requestContext, SessionHandle sessionHandle) {
+    try {
+      streamForwardRequest(requestContext, sessionHandle);
+    } catch (Exception e) {
+      log.error("Error while forwarding: ", e);
+      IOUtils.closeQuietly(sessionHandle.getSource().getSocket());
+      IOUtils.closeQuietly(sessionHandle.getDestination().getSocket());
+    }
   }
 
   private void streamForwardRequest(RequestContext requestContext, SessionHandle sessionHandle) throws Exception {
     StreamHandle streamHandle = new StreamHandle(
         sessionHandle.getSource().getSocket().getInputStream(),
         sessionHandle.getDestination().getSocket().getOutputStream(),
-        sessionHandle.getTraceContext());
+        sessionHandle.getTraceContext(), StreamType.REQUEST);
 
-    httpStreamer.stream(requestContext, streamHandle);
+//    StreamResponse streamResponse = null;
+    while (true) {
+       httpStreamer.stream(requestContext, streamHandle);
+    }
+  }
+
+
+  private void safeStreamResponse(RequestContext requestContext, SessionHandle sessionHandle)  {
+    try {
+      streamResponse(requestContext, sessionHandle);
+    } catch (Exception e) {
+      log.error("Error while responding: ", e);
+      IOUtils.closeQuietly(sessionHandle.getSource().getSocket());
+      IOUtils.closeQuietly(sessionHandle.getDestination().getSocket());
+    }
   }
 
   private void streamResponse(RequestContext requestContext, SessionHandle sessionHandle) throws Exception {
     StreamHandle streamHandle = new StreamHandle(sessionHandle.getDestination().getSocket().getInputStream(),
         sessionHandle.getSource().getSocket().getOutputStream(),
-        sessionHandle.getTraceContext());
+        sessionHandle.getTraceContext(), StreamType.RESPONSE);
 
-    httpStreamer.stream(requestContext, streamHandle);
+    StreamResponse streamResponse = null;
+    do {
+      streamResponse = httpStreamer.stream(requestContext, streamHandle);
+    } while (ConnectionState.KEEP_ALIVE.equals(streamResponse.getConnectionState()));
   }
 }

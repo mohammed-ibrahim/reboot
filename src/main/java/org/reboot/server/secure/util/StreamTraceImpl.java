@@ -1,34 +1,38 @@
 package org.reboot.server.secure.util;
 
+import org.reboot.server.secure.model.StreamHandle;
+import org.reboot.server.secure.model.StreamType;
 import org.reboot.server.secure.model.TraceContext;
 import org.springframework.stereotype.Component;
+
+import java.io.OutputStream;
 
 @Component
 public class StreamTraceImpl implements IStreamTrace {
 
   private static byte[] START_BYTES = "=============================START=================================\r\n".getBytes();
-  private static byte[] PRE_MODIFIED = "\r\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n".getBytes();
-  private static byte[] MID_MODIFIED = "\r\n===================================================================\r\n".getBytes();
-  private static byte[] POST_MODIFIED = "\r\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\r\n".getBytes();
+//  private static byte[] PRE_MODIFIED = "\r\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n".getBytes();
+//  private static byte[] MID_MODIFIED = "\r\n===================================================================\r\n".getBytes();
+//  private static byte[] POST_MODIFIED = "\r\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\r\n".getBytes();
   private static byte[] END_BYTES = "=============================END=================================\r\n".getBytes();
   @Override
   public void start(TraceContext traceContext) throws Exception {
     if (isEnabled(traceContext)) {
-      traceContext.getOutputStream().write(START_BYTES);
+      getStream(traceContext).write(START_BYTES);
     }
   }
 
   @Override
   public void addTrace(TraceContext traceContext, byte[] data) throws Exception {
     if (isEnabled(traceContext)) {
-      traceContext.getOutputStream().write(data);
+      getStream(traceContext).write(data);
     }
   }
 
   @Override
   public void addTrace(TraceContext traceContext, byte[] data, int start, int limit) throws Exception {
     if (isEnabled(traceContext)) {
-      traceContext.getOutputStream().write(data, start, limit);
+      getStream(traceContext).write(data, start, limit);
     }
   }
 
@@ -36,13 +40,18 @@ public class StreamTraceImpl implements IStreamTrace {
   public void addModifiedTrace(TraceContext traceContext, byte[] actual, int start, int limit, boolean isModified, byte[] modified) throws Exception {
     if (isEnabled(traceContext)) {
       if (isModified) {
-        traceContext.getOutputStream().write(PRE_MODIFIED);
-        traceContext.getOutputStream().write(actual, start, limit);
-        traceContext.getOutputStream().write(MID_MODIFIED);
-        traceContext.getOutputStream().write(modified);
-        traceContext.getOutputStream().write(POST_MODIFIED);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<<<< ")
+            .append(new String(actual, start, limit))
+            .append(" ==== ")
+            .append(new String(modified))
+            .append(" >>>>");
+
+        getStream(traceContext).write(sb.toString().getBytes());
+
       } else {
-        traceContext.getOutputStream().write(actual, start, limit);
+        getStream(traceContext).write(actual, start, limit);
       }
     }
   }
@@ -50,11 +59,32 @@ public class StreamTraceImpl implements IStreamTrace {
   @Override
   public void end(TraceContext traceContext) throws Exception {
     if (isEnabled(traceContext)) {
-      traceContext.getOutputStream().write(END_BYTES);
+      getStream(traceContext).write(END_BYTES);
     }
   }
 
   private boolean isEnabled(TraceContext traceContext) throws Exception {
-    return traceContext.getOutputStream() != null;
+    if (traceContext.getStreamType().equals(StreamType.REQUEST)) {
+      return traceContext.getRequestStream() != null;
+    }
+
+    if (traceContext.getStreamType().equals(StreamType.RESPONSE)) {
+      return traceContext.getResponseStream() != null;
+    }
+
+    throw new RuntimeException("Unknown stream type: " + traceContext.getStreamType());
+  }
+
+  private OutputStream getStream(TraceContext traceContext) {
+
+    switch (traceContext.getStreamType()) {
+      case REQUEST:
+        return traceContext.getRequestStream();
+
+      case RESPONSE:
+        return traceContext.getResponseStream();
+    }
+
+    throw new RuntimeException("Unknown stream type: " + traceContext.getStreamType());
   }
 }

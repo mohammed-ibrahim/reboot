@@ -1,12 +1,14 @@
 package org.reboot.server.secure.core.stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.reboot.server.secure.model.ConnectionState;
 import org.reboot.server.secure.model.HeaderProcessingResponse;
 import org.reboot.server.secure.model.HttpHeaderContext;
 import org.reboot.server.secure.model.HttpVersion;
 import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.model.StreamHandle;
 import org.reboot.server.secure.model.StreamResponse;
+import org.reboot.server.secure.model.StreamType;
 import org.reboot.server.secure.util.IServerConfiguration;
 import org.reboot.server.secure.util.IStreamTrace;
 import org.slf4j.Logger;
@@ -41,12 +43,12 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
   @Override
-  public StreamResponse stream(RequestContext requestContext, StreamHandle streamHandle, boolean forwardStream) throws Exception {
+  public StreamResponse stream(RequestContext requestContext, StreamHandle streamHandle) throws Exception {
     streamTrace.start(streamHandle.getTraceContext());
 
     log.info("Reading headers, host modification allowed: {}", requestContext.isUpdateHostHeader());
     byte[] sessionBuffer = new byte[16*1024];
-    HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, requestContext, forwardStream);
+    HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, requestContext);
     log.info("Reading headers complete");
 
     if (httpHeaderContext.hasBody()) {
@@ -60,6 +62,10 @@ public class HttpStreamerImpl implements IHttpStreamer {
       }
     }
     streamTrace.end(streamHandle.getTraceContext());
+
+    return StreamType.RESPONSE.equals(streamHandle.getStreamType())
+        ? new StreamResponse(ConnectionState.KEEP_ALIVE)
+        : null;
   }
 
   private void streamBasedOnChunkedData(StreamHandle streamHandle, byte[] sessionBuffer) throws Exception  {
@@ -136,14 +142,14 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
 
-  private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer, RequestContext requestContext, boolean forwardStream) throws Exception {
+  private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer, RequestContext requestContext) throws Exception {
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
 
     while (true) {
 //      byte[] data = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
       int numBytesRead = readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
 
-      if (forwardStream && requestContext.getHttpVersion() == null) {
+      if (StreamType.REQUEST.equals(streamHandle.getStreamType()) && requestContext.getHttpVersion() == null) {
         setHttpVersion(sessionBuffer, numBytesRead, requestContext);
       }
 
@@ -172,9 +178,8 @@ public class HttpStreamerImpl implements IHttpStreamer {
     } else if (StringUtils.equalsIgnoreCase(lastPart, "HTTP/2")) {
       requestContext.setHttpVersion(HttpVersion.HTTP_2);
     }
-  }
 
-  private void setRequestLineStatusDetails(RequestContext requestContext) {
+    log.info("Http version is: {}", requestContext.getHttpVersion());
   }
 
   public void writeToOutputAndTrace(StreamHandle streamHandle,

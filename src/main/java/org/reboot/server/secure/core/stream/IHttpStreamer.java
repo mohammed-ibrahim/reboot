@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public interface IHttpStreamer {
-  StreamResponse stream(RequestContext requestContext, StreamHandle streamHandle, boolean forwardStream) throws Exception;
+  StreamResponse stream(RequestContext requestContext, StreamHandle streamHandle) throws Exception;
 
 //  void close() throws Exception;
 }

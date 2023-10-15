@@ -1,5 +1,6 @@
 package org.reboot.server.secure;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.reboot.server.secure.core.IProxyRequestProcessor;
 import org.reboot.server.secure.core.IDestinationServerSocketProvider;
 import org.reboot.server.secure.model.InboundSocket;
@@ -88,22 +89,25 @@ public class SockMain {
     requestContext.setUpdateHostHeader(serverConfiguration.getBooleanProperty(UPDATE_SERVER_HOST));
 
     SessionHandle sessionHandle = new SessionHandle(new InboundSocket(socket), managedSocket, getTraceContext());
-
     proxyRequestProcessor.start(requestContext, sessionHandle);
-    proxyRequestProcessor.close(sessionHandle);
-    destinationServerSocketProvider.releaseConnection(sessionHandle.getDestination());
   }
 
   private TraceContext getTraceContext() throws Exception {
     boolean traceEnabled = serverConfiguration.getBooleanProperty("http.tracing.enabled");
-    OutputStream outputStream = null;
+    OutputStream requestStream = null;
+    OutputStream responseStream = null;
 
     if (traceEnabled) {
+      String id = RandomStringUtils.randomAlphabetic(10);
+      String requestId = id + "-request.log";
+      String responseId = id + "-response.log";
       String dataDumpDirectory = serverConfiguration.getRequiredProperty("data.dump.dir");
-      File outputFile = Paths.get(dataDumpDirectory, UUID.randomUUID().toString() + ".log").toFile();
-      outputStream = new FileOutputStream(outputFile);
+      File outputFile = Paths.get(dataDumpDirectory, requestId).toFile();
+      requestStream = new FileOutputStream(outputFile);
+      File responseFile = Paths.get(dataDumpDirectory, responseId).toFile();
+      responseStream = new FileOutputStream(responseFile);
     }
 
-    return new TraceContext(outputStream);
+    return new TraceContext(requestStream, responseStream);
   }
 }
