@@ -67,7 +67,7 @@ public class HttpStreamerImplTest {
   }
 
   private TraceContext getDisabledTraceContext() {
-    return new TraceContext(null, null);
+    return new TraceContext( null);
   }
 
   private IHeaderProcessor getHeadProcessor() {

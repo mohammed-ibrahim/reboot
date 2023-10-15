@@ -18,7 +18,6 @@ public class StreamHandle {
     this.outputStream = outputStream;
     this.traceContext = traceContext;
     this.streamType = streamType;
-    traceContext.setStreamType(streamType);
   }
 
   public InputStream getInputStream() {

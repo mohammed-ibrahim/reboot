@@ -63,7 +63,7 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
     StreamHandle streamHandle = new StreamHandle(
         sessionHandle.getSource().getSocket().getInputStream(),
         sessionHandle.getDestination().getSocket().getOutputStream(),
-        sessionHandle.getTraceContext(), StreamType.REQUEST);
+        sessionHandle.getRequestTraceContext(), StreamType.REQUEST);
 
 //    StreamResponse streamResponse = null;
     while (true) {
@@ -85,7 +85,7 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
   private void streamResponse(RequestContext requestContext, SessionHandle sessionHandle) throws Exception {
     StreamHandle streamHandle = new StreamHandle(sessionHandle.getDestination().getSocket().getInputStream(),
         sessionHandle.getSource().getSocket().getOutputStream(),
-        sessionHandle.getTraceContext(), StreamType.RESPONSE);
+        sessionHandle.getResponseTraceContext(), StreamType.RESPONSE);
 
     StreamResponse streamResponse = null;
     do {

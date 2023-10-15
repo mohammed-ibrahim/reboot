@@ -4,30 +4,13 @@ import java.io.OutputStream;
 
 public class TraceContext {
 
-  private OutputStream requestStream;
+  private OutputStream outputStream;
 
-  private OutputStream responseStream;
-
-  private StreamType streamType;
-
-  public TraceContext(OutputStream requestStream, OutputStream responseStream) {
-    this.requestStream = requestStream;
-    this.responseStream = responseStream;
+  public TraceContext(OutputStream requestStream) {
+    this.outputStream = requestStream;
   }
 
-  public OutputStream getRequestStream() {
-    return requestStream;
-  }
-
-  public OutputStream getResponseStream() {
-    return responseStream;
-  }
-
-  public StreamType getStreamType() {
-    return streamType;
-  }
-
-  public void setStreamType(StreamType streamType) {
-    this.streamType = streamType;
+  public OutputStream getOutputStream() {
+    return outputStream;
   }
 }

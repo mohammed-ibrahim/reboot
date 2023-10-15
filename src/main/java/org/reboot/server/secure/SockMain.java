@@ -1,6 +1,7 @@
 package org.reboot.server.secure;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.reboot.server.secure.core.IProxyRequestProcessor;
 import org.reboot.server.secure.core.IDestinationServerSocketProvider;
 import org.reboot.server.secure.model.InboundSocket;
@@ -13,6 +14,7 @@ import org.reboot.server.secure.util.IServerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +45,7 @@ public class SockMain {
   private IServerSocketProvider serverSocketProvider;
   @Autowired
   public SockMain(IServerConfiguration serverConfiguration,
-                  IDestinationServerSocketProvider destinationServerSocketProvider,
+                  @Qualifier("plainDestinationServerSocketProvider") IDestinationServerSocketProvider destinationServerSocketProvider,
                   IProxyRequestProcessor proxyRequestProcessor,
                   IServerSocketProvider serverSocketProvider) {
     this.serverConfiguration = serverConfiguration;
@@ -88,11 +90,12 @@ public class SockMain {
     requestContext.setDestinationHostName(managedSocket.getHost());
     requestContext.setUpdateHostHeader(serverConfiguration.getBooleanProperty(UPDATE_SERVER_HOST));
 
-    SessionHandle sessionHandle = new SessionHandle(new InboundSocket(socket), managedSocket, getTraceContext());
+    Pair<TraceContext, TraceContext> traceContextPair = getTraceContext();
+    SessionHandle sessionHandle = new SessionHandle(new InboundSocket(socket), managedSocket, traceContextPair.getLeft(), traceContextPair.getRight());
     proxyRequestProcessor.start(requestContext, sessionHandle);
   }
 
-  private TraceContext getTraceContext() throws Exception {
+  private Pair<TraceContext, TraceContext> getTraceContext() throws Exception {
     boolean traceEnabled = serverConfiguration.getBooleanProperty("http.tracing.enabled");
     OutputStream requestStream = null;
     OutputStream responseStream = null;
@@ -108,6 +111,6 @@ public class SockMain {
       responseStream = new FileOutputStream(responseFile);
     }
 
-    return new TraceContext(requestStream, responseStream);
+    return Pair.of(new TraceContext(requestStream), new TraceContext(responseStream));
   }
 }
