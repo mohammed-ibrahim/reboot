@@ -10,8 +10,11 @@ public class RequestContext {
 
   private boolean updateHostHeader;
 
+  private HttpVersion httpVersion;
+
   public RequestContext() {
     this.id = RandomStringUtils.randomAlphabetic(10);
+    httpVersion = null;
   }
 
   public String getId() {
@@ -32,5 +35,13 @@ public class RequestContext {
 
   public void setUpdateHostHeader(boolean updateHostHeader) {
     this.updateHostHeader = updateHostHeader;
+  }
+
+  public HttpVersion getHttpVersion() {
+    return httpVersion;
+  }
+
+  public void setHttpVersion(HttpVersion httpVersion) {
+    this.httpVersion = httpVersion;
   }
 }

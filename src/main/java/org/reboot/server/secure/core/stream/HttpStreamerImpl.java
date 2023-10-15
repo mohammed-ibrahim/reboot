@@ -1,9 +1,12 @@
 package org.reboot.server.secure.core.stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.reboot.server.secure.model.HeaderProcessingResponse;
 import org.reboot.server.secure.model.HttpHeaderContext;
+import org.reboot.server.secure.model.HttpVersion;
 import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.model.StreamHandle;
+import org.reboot.server.secure.model.StreamResponse;
 import org.reboot.server.secure.util.IServerConfiguration;
 import org.reboot.server.secure.util.IStreamTrace;
 import org.slf4j.Logger;
@@ -38,12 +41,12 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
   @Override
-  public void stream(RequestContext requestContext, StreamHandle streamHandle) throws Exception {
+  public StreamResponse stream(RequestContext requestContext, StreamHandle streamHandle, boolean forwardStream) throws Exception {
     streamTrace.start(streamHandle.getTraceContext());
 
     log.info("Reading headers, host modification allowed: {}", requestContext.isUpdateHostHeader());
     byte[] sessionBuffer = new byte[16*1024];
-    HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, requestContext);
+    HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, requestContext, forwardStream);
     log.info("Reading headers complete");
 
     if (httpHeaderContext.hasBody()) {
@@ -133,11 +136,16 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
 
-  private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer, RequestContext requestContext) throws Exception {
+  private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer, RequestContext requestContext, boolean forwardStream) throws Exception {
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
+
     while (true) {
 //      byte[] data = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
       int numBytesRead = readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
+
+      if (forwardStream && requestContext.getHttpVersion() == null) {
+        setHttpVersion(sessionBuffer, numBytesRead, requestContext);
+      }
 
       log.debug("Read line: {}", new String(sessionBuffer, 0, numBytesRead));
       if (numBytesRead < 1) {
@@ -152,6 +160,21 @@ public class HttpStreamerImpl implements IHttpStreamer {
     }
 
     return httpHeaderContext;
+  }
+
+  private void setHttpVersion(byte[] sessionBuffer, int numBytesRead, RequestContext requestContext) {
+    String line = new String(sessionBuffer, 0, numBytesRead);
+    String parts[] = line.split(" ");
+    String lastPart = parts[parts.length-1];
+
+    if (StringUtils.equalsIgnoreCase(lastPart, "HTTP/1.1")) {
+      requestContext.setHttpVersion(HttpVersion.HTTP_1_1);
+    } else if (StringUtils.equalsIgnoreCase(lastPart, "HTTP/2")) {
+      requestContext.setHttpVersion(HttpVersion.HTTP_2);
+    }
+  }
+
+  private void setRequestLineStatusDetails(RequestContext requestContext) {
   }
 
   public void writeToOutputAndTrace(StreamHandle streamHandle,
