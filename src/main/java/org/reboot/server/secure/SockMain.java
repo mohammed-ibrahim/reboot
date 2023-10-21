@@ -24,7 +24,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Paths;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -90,20 +89,20 @@ public class SockMain {
     requestContext.setDestinationHostName(managedSocket.getHost());
     requestContext.setUpdateHostHeader(serverConfiguration.getBooleanProperty(UPDATE_SERVER_HOST));
 
-    Pair<TraceContext, TraceContext> traceContextPair = getTraceContext();
+    Pair<TraceContext, TraceContext> traceContextPair = getTraceContext(managedSocket);
     SessionHandle sessionHandle = new SessionHandle(new InboundSocket(socket), managedSocket, traceContextPair.getLeft(), traceContextPair.getRight());
     proxyRequestProcessor.start(requestContext, sessionHandle);
   }
 
-  private Pair<TraceContext, TraceContext> getTraceContext() throws Exception {
+  private Pair<TraceContext, TraceContext> getTraceContext(ManagedSocket managedSocket) throws Exception {
     boolean traceEnabled = serverConfiguration.getBooleanProperty("http.tracing.enabled");
     OutputStream requestStream = null;
     OutputStream responseStream = null;
 
     if (traceEnabled) {
-      String id = RandomStringUtils.randomAlphabetic(10);
-      String requestId = id + "-request.log";
-      String responseId = id + "-response.log";
+      String id = managedSocket.getConnectionId();
+      String requestId = id + "-REQ.log";
+      String responseId = id + "-RES.log";
       String dataDumpDirectory = serverConfiguration.getRequiredProperty("data.dump.dir");
       File outputFile = Paths.get(dataDumpDirectory, requestId).toFile();
       requestStream = new FileOutputStream(outputFile);
