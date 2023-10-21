@@ -70,8 +70,8 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
     int numRequests = 0;
 //    StreamResponse streamResponse = null;
     while (true) {
-       httpStreamer.stream(requestContext, streamHandle);
-       log.info("Completed total request(s): {}", ++numRequests);
+      StreamResponse streamResponse = httpStreamer.stream(requestContext, streamHandle);
+      log.info("Total REQ: {}, bytes: {}", ++numRequests, (streamResponse.getNumHeaderBytes() + streamResponse.getNumBodyBytes()));
     }
   }
 
@@ -95,7 +95,7 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
     StreamResponse streamResponse = null;
     do {
       streamResponse = httpStreamer.stream(requestContext, streamHandle);
-      log.info("Completed total response(s): {}", ++numResponses);
+      log.info("Total RES: {}, bytes: {}", ++numResponses, (streamResponse.getNumHeaderBytes() + streamResponse.getNumBodyBytes()));
     } while (ConnectionState.KEEP_ALIVE.equals(streamResponse.getConnectionState()));
   }
 }

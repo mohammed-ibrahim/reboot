@@ -54,7 +54,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
     int numBytesBody = 0;
 
     if (httpHeaderContext.hasBody()) {
-      log.debug("Request has body");
+      log.trace("Request has body");
       if (httpHeaderContext.isContentLength()) {
         streamBasedOnContentLength(httpHeaderContext, streamHandle, sessionBuffer);
         numBytesBody = httpHeaderContext.getContentLength();
@@ -128,9 +128,9 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
     while (numBytesRead < chunkSize) {
       int pendingBytes = calculatePendingBytes(numBytesRead, sessionBuffer.length, chunkSize);
-      log.debug("Reading from: {} to: {}", 0, pendingBytes);
+      log.trace("Reading from: {} to: {}", 0, pendingBytes);
       int read = streamHandle.getInputStream().read(sessionBuffer, 0, pendingBytes);
-      log.debug("Read complete, num bytes: {}", read);
+      log.trace("Read complete, num bytes: {}", read);
 
       if (read == -1) {
         log.error("Unexpected break: {}", read);
@@ -143,7 +143,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
       }
     }
 
-    log.debug("Successfully read chunk bytes");
+    log.trace("Successfully read chunk bytes");
   }
 
   private int calculatePendingBytes(int numBytesAlreadyRead, int bufferSize, int chunkSize) {
@@ -169,7 +169,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
         setHttpVersion(sessionBuffer, numBytesRead, requestContext);
       }
 
-      log.debug("Read line: {}", new String(sessionBuffer, 0, numBytesRead));
+      log.trace("Read line: {}", new String(sessionBuffer, 0, numBytesRead));
       if (numBytesRead < 1) {
         //as an empty line was read from input, empty line must be written to output.
         addNewLineToOutputAndTrace(streamHandle);
@@ -198,7 +198,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
       requestContext.setHttpVersion(HttpVersion.HTTP_2);
     }
 
-    log.info("Http version is: {}", requestContext.getHttpVersion());
+    log.trace("Http version is: {}", requestContext.getHttpVersion());
   }
 
   public void writeToOutputAndTrace(StreamHandle streamHandle,
@@ -249,6 +249,10 @@ public class HttpStreamerImpl implements IHttpStreamer {
         readItem = inputStream.read();
       }
     }
+
+//    if (readItem == -1) {
+//      log.error("Nothing was read from the stream.");
+//    }
 
     return index;
   }

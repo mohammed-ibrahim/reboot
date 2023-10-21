@@ -20,21 +20,25 @@ public class PlainDestinationServerSocketProvider implements IDestinationServerS
   private static final SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 
   public static final String DEST_SERVER_HOST = "dest.server.host";
-  private String host;
+//  private String host;
 
   private int port;
+
+  private IServerConfiguration serverConfiguration;
 
   private IConnectionFactory connectionFactory;
 
   @Autowired
   public PlainDestinationServerSocketProvider(IServerConfiguration serverConfiguration, IConnectionFactory connectionFactory) {
-    this.host = serverConfiguration.getRequiredProperty(DEST_SERVER_HOST);
+//    this.host = serverConfiguration.getRequiredProperty(DEST_SERVER_HOST);
+    this.serverConfiguration = serverConfiguration;
     this.port = 443;
     this.connectionFactory = connectionFactory;
   }
 
   @Override
   public ManagedSocket getDestinationSocket() throws Exception {
+    String host = serverConfiguration.getRequiredProperty(DEST_SERVER_HOST);
     Pair<String, SSLSocket> newConnection = connectionFactory.getNewConnection(host, port);
     log.info("Creating new connection with id: {}", newConnection.getLeft());
     ManagedSocket managedSocket = new ManagedSocket(newConnection.getLeft(), newConnection.getRight(), host, port, SocketState.IN_USE);
