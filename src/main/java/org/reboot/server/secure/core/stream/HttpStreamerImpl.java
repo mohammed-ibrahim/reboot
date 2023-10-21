@@ -46,13 +46,13 @@ public class HttpStreamerImpl implements IHttpStreamer {
   public StreamResponse stream(RequestContext requestContext, StreamHandle streamHandle) throws Exception {
     streamTrace.start(streamHandle.getTraceContext());
 
-    log.debug("Reading headers, host modification allowed: {}", requestContext.isUpdateHostHeader());
+    log.trace("Reading headers, host modification allowed: {}", requestContext.isUpdateHostHeader());
     byte[] sessionBuffer = new byte[16*1024];
     HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, requestContext);
-    log.info("Reading headers complete");
+    log.trace("Reading headers complete");
 
     if (httpHeaderContext.hasBody()) {
-      log.info("Request has body");
+      log.debug("Request has body");
       if (httpHeaderContext.isContentLength()) {
         streamBasedOnContentLength(httpHeaderContext, streamHandle, sessionBuffer);
       } else if (httpHeaderContext.isChunkedPacket()) {
@@ -76,7 +76,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
       //At this place chunkSize is already read in sessionBuffer.
       String chunkSizeHexString = new String(sessionBuffer, 0, numBytesRead);
       int chunkSize = Integer.parseInt(chunkSizeHexString, 16);
-      log.info("Chunk size: {}", chunkSize);
+      log.trace("Chunk size: {}", chunkSize);
 
       //Write the chunkSize to sessionBuffer
       addBytesToOutputAndTraceWithStartAndEnd(streamHandle, sessionBuffer, 0, numBytesRead);

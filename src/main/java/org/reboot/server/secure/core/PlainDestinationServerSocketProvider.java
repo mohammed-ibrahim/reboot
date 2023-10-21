@@ -36,7 +36,7 @@ public class PlainDestinationServerSocketProvider implements IDestinationServerS
   @Override
   public ManagedSocket getDestinationSocket() throws Exception {
     Pair<String, SSLSocket> newConnection = connectionFactory.getNewConnection(host, port);
-    log.info("Creating new connection as there are no idle connections, new connection id: {}", newConnection.getLeft());
+    log.info("Creating new connection with id: {}", newConnection.getLeft());
     ManagedSocket managedSocket = new ManagedSocket(newConnection.getLeft(), newConnection.getRight(), host, port, SocketState.IN_USE);
     return managedSocket;
   }
