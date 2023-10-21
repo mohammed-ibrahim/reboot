@@ -36,10 +36,12 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
   public void start(RequestContext requestContext, SessionHandle sessionHandle) throws Exception {
 
     executorService.submit(() -> {
+      Thread.currentThread().setName(sessionHandle.getDestination().getConnectionId() + "-REQ");
       safeStreamForwardRequest(requestContext, sessionHandle);
     });
 
     executorService.submit(() -> {
+      Thread.currentThread().setName(sessionHandle.getDestination().getConnectionId() + "-RES");
       safeStreamResponse(requestContext, sessionHandle);
     });
 

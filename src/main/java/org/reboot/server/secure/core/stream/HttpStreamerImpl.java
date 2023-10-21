@@ -46,7 +46,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
   public StreamResponse stream(RequestContext requestContext, StreamHandle streamHandle) throws Exception {
     streamTrace.start(streamHandle.getTraceContext());
 
-    log.info("Reading headers, host modification allowed: {}", requestContext.isUpdateHostHeader());
+    log.debug("Reading headers, host modification allowed: {}", requestContext.isUpdateHostHeader());
     byte[] sessionBuffer = new byte[16*1024];
     HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, requestContext);
     log.info("Reading headers complete");
@@ -115,9 +115,9 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
     while (numBytesRead < chunkSize) {
       int pendingBytes = calculatePendingBytes(numBytesRead, sessionBuffer.length, chunkSize);
-      log.info("Reading from: {} to: {}", 0, pendingBytes);
+      log.debug("Reading from: {} to: {}", 0, pendingBytes);
       int read = streamHandle.getInputStream().read(sessionBuffer, 0, pendingBytes);
-      log.info("Read complete, num bytes: {}", read);
+      log.debug("Read complete, num bytes: {}", read);
 
       if (read == -1) {
         log.error("Unexpected break: {}", read);
@@ -130,7 +130,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
       }
     }
 
-    log.info("Successfully read chunk bytes");
+    log.debug("Successfully read chunk bytes");
   }
 
   private int calculatePendingBytes(int numBytesAlreadyRead, int bufferSize, int chunkSize) {
