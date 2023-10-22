@@ -15,19 +15,27 @@ public class ConnectionFactoryImpl implements IConnectionFactory {
 
   private long numConnections = 0;
 
+  private Object sync;
+
   @Autowired
   public ConnectionFactoryImpl() {
     numConnections = 0;
+    this.sync = new Object();
   }
 
   @Override
   public Pair<String, SSLSocket> getNewConnection(String host, int port) throws Exception {
-    SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
-    socket.startHandshake();
-    return Pair.of(getNewId(), socket);
+
+    synchronized (sync) {
+      SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
+      socket.startHandshake();
+      return Pair.of(getNewId(), socket);
+    }
+
   }
 
   private String getNewId() {
-    return String.format("%s-%07d", RandomStringUtils.randomAlphabetic(10) , ++numConnections);
+//    return String.format("%s-%07d", RandomStringUtils.randomAlphabetic(10) , ++numConnections);
+    return String.format("%09d" , ++numConnections);
   }
 }

@@ -3,6 +3,8 @@ package org.reboot.server.secure.core.stream;
 import org.apache.commons.io.IOUtils;
 import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.model.StreamHandle;
+import org.reboot.server.secure.model.StreamResponse;
+import org.reboot.server.secure.model.StreamType;
 import org.reboot.server.secure.model.TraceContext;
 import org.reboot.server.secure.util.IServerConfiguration;
 import org.reboot.server.secure.util.IStreamTrace;
@@ -27,11 +29,13 @@ public class HttpStreamerImplTest {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(input.getBytes());
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig(), getMockTrace());
-    StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream, null);
-    httpStreamer.stream(new RequestContext(), streamHandle);
+    StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream, getDisabledTraceContext(), StreamType.REQUEST);
+    StreamResponse streamResponse = httpStreamer.stream(new RequestContext(), streamHandle);
 
     String output = new String(byteArrayOutputStream.toByteArray());
     assertEquals(output, input);
+    assertEquals(streamResponse.getNumHeaderBytes() + streamResponse.getNumBodyBytes(), input.length(), "Body size mismatch");
+    assertEquals(streamResponse.getNumHeaders(), 2, "Mismatch in header count");
   }
 
   @Test
@@ -44,11 +48,14 @@ public class HttpStreamerImplTest {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(expected.getBytes());
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig(), getMockTrace());
-    StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream, null);
-    httpStreamer.stream(new RequestContext(), streamHandle);
+    StreamHandle streamHandle = new StreamHandle(byteArrayInputStream, byteArrayOutputStream, getDisabledTraceContext(), StreamType.REQUEST);
+    StreamResponse streamResponse = httpStreamer.stream(new RequestContext(), streamHandle);
 
     String actual = new String(byteArrayOutputStream.toByteArray());
     assertEquals(actual, expected);
+    assertEquals(streamResponse.getNumBodyBytes(), 0, "Body bytes are expected to be 0");
+    assertEquals(streamResponse.getNumHeaderBytes(), expected.length(), "Header size mismatch");
+    assertEquals(streamResponse.getNumHeaders(), 4, "Mismatch in header count");
   }
 
   @Test
@@ -57,12 +64,17 @@ public class HttpStreamerImplTest {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     InputStream resourceAsStream = this.getClass().getResourceAsStream("/chunked-sample-1.txt");
     HttpStreamerImpl httpStreamer = new HttpStreamerImpl(getHeadProcessor(), getServerConfig(), getMockTrace());
-    StreamHandle streamHandle = new StreamHandle(resourceAsStream, byteArrayOutputStream, null);
-    httpStreamer.stream(new RequestContext(), streamHandle);
+    StreamHandle streamHandle = new StreamHandle(resourceAsStream, byteArrayOutputStream, getDisabledTraceContext(), StreamType.REQUEST);
+    StreamResponse streamResponse = httpStreamer.stream(new RequestContext(), streamHandle);
 
     String input = IOUtils.toString(this.getClass().getResourceAsStream("/chunked-sample-1.txt"));
     String output = new String(byteArrayOutputStream.toByteArray());
     assertEquals(output, input);
+    assertEquals(streamResponse.getNumHeaderBytes() + streamResponse.getNumBodyBytes(), input.length(), "Body size mismatch");
+  }
+
+  private TraceContext getDisabledTraceContext() {
+    return new TraceContext( null);
   }
 
   private IHeaderProcessor getHeadProcessor() {

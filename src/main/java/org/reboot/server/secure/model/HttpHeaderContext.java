@@ -10,6 +10,10 @@ public class HttpHeaderContext {
 
   private HttpConnection httpConnection;
 
+  private int numHeadersRead;
+
+  private int totalNumberOfBytesReadForHeaders;
+
   public HttpHeaderContext() {
     this.httpConnection = HttpConnection.NOT_SPECIFIED;
   }
@@ -48,5 +52,21 @@ public class HttpHeaderContext {
 
   public void setHttpConnection(HttpConnection httpConnection) {
     this.httpConnection = httpConnection;
+  }
+
+  public int getNumHeadersRead() {
+    return numHeadersRead;
+  }
+
+  public void setNumHeadersRead(int numHeadersRead) {
+    this.numHeadersRead = numHeadersRead;
+  }
+
+  public int getTotalNumberOfBytesReadForHeaders() {
+    return totalNumberOfBytesReadForHeaders;
+  }
+
+  public void setTotalNumberOfBytesReadForHeaders(int totalNumberOfBytesReadForHeaders) {
+    this.totalNumberOfBytesReadForHeaders = totalNumberOfBytesReadForHeaders;
   }
 }

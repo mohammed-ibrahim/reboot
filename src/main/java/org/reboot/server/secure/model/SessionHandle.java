@@ -8,12 +8,16 @@ public class SessionHandle {
 
   private ManagedSocket destination;
 
-  private TraceContext traceContext;
+  private TraceContext requestTraceContext;
 
-  public SessionHandle(InboundSocket source, ManagedSocket destination, TraceContext traceContext) {
+  private TraceContext responseTraceContext;
+
+  public SessionHandle(InboundSocket source, ManagedSocket destination,
+                       TraceContext requestTraceContext, TraceContext responseTraceContext) {
     this.source = source;
     this.destination = destination;
-    this.traceContext = traceContext;
+    this.requestTraceContext = requestTraceContext;
+    this.responseTraceContext = responseTraceContext;
   }
 
   public InboundSocket getSource() {
@@ -24,7 +28,11 @@ public class SessionHandle {
     return destination;
   }
 
-  public TraceContext getTraceContext() {
-    return traceContext;
+  public TraceContext getRequestTraceContext() {
+    return requestTraceContext;
+  }
+
+  public TraceContext getResponseTraceContext() {
+    return responseTraceContext;
   }
 }

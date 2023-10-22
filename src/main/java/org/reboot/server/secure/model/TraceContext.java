@@ -6,8 +6,8 @@ public class TraceContext {
 
   private OutputStream outputStream;
 
-  public TraceContext(OutputStream outputStream) {
-    this.outputStream = outputStream;
+  public TraceContext(OutputStream requestStream) {
+    this.outputStream = requestStream;
   }
 
   public OutputStream getOutputStream() {

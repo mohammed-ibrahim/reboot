@@ -1,9 +1,14 @@
 package org.reboot.server.secure.core.stream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.reboot.server.secure.model.ConnectionState;
 import org.reboot.server.secure.model.HeaderProcessingResponse;
 import org.reboot.server.secure.model.HttpHeaderContext;
+import org.reboot.server.secure.model.HttpVersion;
 import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.model.StreamHandle;
+import org.reboot.server.secure.model.StreamResponse;
+import org.reboot.server.secure.model.StreamType;
 import org.reboot.server.secure.util.IServerConfiguration;
 import org.reboot.server.secure.util.IStreamTrace;
 import org.slf4j.Logger;
@@ -38,36 +43,47 @@ public class HttpStreamerImpl implements IHttpStreamer {
   }
 
   @Override
-  public void stream(RequestContext requestContext, StreamHandle streamHandle) throws Exception {
+  public StreamResponse stream(RequestContext requestContext, StreamHandle streamHandle) throws Exception {
     streamTrace.start(streamHandle.getTraceContext());
 
-    log.info("Reading headers, host modification allowed: {}", requestContext.isUpdateHostHeader());
+    log.trace("Reading headers, host modification allowed: {}", requestContext.isUpdateHostHeader());
     byte[] sessionBuffer = new byte[16*1024];
     HttpHeaderContext httpHeaderContext = streamHeaders(streamHandle, sessionBuffer, requestContext);
-    log.info("Reading headers complete");
+    log.trace("Reading headers complete");
+
+    int numBytesBody = 0;
 
     if (httpHeaderContext.hasBody()) {
-      log.info("Request has body");
+      log.trace("Request has body");
       if (httpHeaderContext.isContentLength()) {
         streamBasedOnContentLength(httpHeaderContext, streamHandle, sessionBuffer);
+        numBytesBody = httpHeaderContext.getContentLength();
       } else if (httpHeaderContext.isChunkedPacket()) {
-        streamBasedOnChunkedData(streamHandle, sessionBuffer);
+        numBytesBody = streamBasedOnChunkedData(streamHandle, sessionBuffer);
       } else {
         throw new RuntimeException("Unexpected");
       }
     }
     streamTrace.end(streamHandle.getTraceContext());
+
+    return StreamType.RESPONSE.equals(streamHandle.getStreamType())
+        ? new StreamResponse(ConnectionState.KEEP_ALIVE, httpHeaderContext.getNumHeadersRead(), httpHeaderContext.getTotalNumberOfBytesReadForHeaders(), numBytesBody)
+        : new StreamResponse(null, httpHeaderContext.getNumHeadersRead(), httpHeaderContext.getTotalNumberOfBytesReadForHeaders(), numBytesBody);
   }
 
-  private void streamBasedOnChunkedData(StreamHandle streamHandle, byte[] sessionBuffer) throws Exception  {
+  private int streamBasedOnChunkedData(StreamHandle streamHandle, byte[] sessionBuffer) throws Exception  {
+    int totalNumberOfBytesRead = 0;
 
     //TODO: Truncate the extension data for chunk-size header.
     int numBytesRead = readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
+
     while (numBytesRead > 0) {
+      totalNumberOfBytesRead += numBytesRead + 2; // (+2 is for extra CRLF)
+
       //At this place chunkSize is already read in sessionBuffer.
       String chunkSizeHexString = new String(sessionBuffer, 0, numBytesRead);
       int chunkSize = Integer.parseInt(chunkSizeHexString, 16);
-      log.info("Chunk size: {}", chunkSize);
+      log.trace("Chunk size: {}", chunkSize);
 
       //Write the chunkSize to sessionBuffer
       addBytesToOutputAndTraceWithStartAndEnd(streamHandle, sessionBuffer, 0, numBytesRead);
@@ -83,17 +99,23 @@ public class HttpStreamerImpl implements IHttpStreamer {
         Next line is read and written after the below comment.
          */
         readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
+        totalNumberOfBytesRead += 2; // (+2 is for extra CRLF)
         addNewLineToOutputAndTrace(streamHandle);
-        return;
+        return totalNumberOfBytesRead;
       }
 
       this.streamBytes(chunkSize, streamHandle, sessionBuffer);
+      //Write the new line after chunkbody.
       addNewLineToOutputAndTrace(streamHandle);
+      totalNumberOfBytesRead += chunkSize; // (+2 is for extra CRLF) //the above line
 
       // Read the additional CLRF after chunk-body
       readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
+      totalNumberOfBytesRead += 2; // (+2 is for extra CRLF)
       numBytesRead = readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
     }
+
+    return totalNumberOfBytesRead;
   }
 
   private void streamBasedOnContentLength(HttpHeaderContext httpHeaderContext, StreamHandle streamHandle, byte[] sessionBuffer) throws Exception {
@@ -106,9 +128,9 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
     while (numBytesRead < chunkSize) {
       int pendingBytes = calculatePendingBytes(numBytesRead, sessionBuffer.length, chunkSize);
-      log.info("Reading from: {} to: {}", 0, pendingBytes);
+      log.trace("Reading from: {} to: {}", 0, pendingBytes);
       int read = streamHandle.getInputStream().read(sessionBuffer, 0, pendingBytes);
-      log.info("Read complete, num bytes: {}", read);
+      log.trace("Read complete, num bytes: {}", read);
 
       if (read == -1) {
         log.error("Unexpected break: {}", read);
@@ -121,7 +143,7 @@ public class HttpStreamerImpl implements IHttpStreamer {
       }
     }
 
-    log.info("Successfully read chunk bytes");
+    log.trace("Successfully read chunk bytes");
   }
 
   private int calculatePendingBytes(int numBytesAlreadyRead, int bufferSize, int chunkSize) {
@@ -135,23 +157,48 @@ public class HttpStreamerImpl implements IHttpStreamer {
 
   private HttpHeaderContext streamHeaders(StreamHandle streamHandle, byte[] sessionBuffer, RequestContext requestContext) throws Exception {
     HttpHeaderContext httpHeaderContext = new HttpHeaderContext();
+    int numHeaders = 0;
+    int totalBytesReadForHeaders = 0;
+
     while (true) {
 //      byte[] data = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
       int numBytesRead = readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
+      totalBytesReadForHeaders += numBytesRead + 2; // (+2 is for extra CRLF)
 
-      log.debug("Read line: {}", new String(sessionBuffer, 0, numBytesRead));
+      if (StreamType.REQUEST.equals(streamHandle.getStreamType()) && requestContext.getHttpVersion() == null) {
+        setHttpVersion(sessionBuffer, numBytesRead, requestContext);
+      }
+
+      log.trace("Read line: {}", new String(sessionBuffer, 0, numBytesRead));
       if (numBytesRead < 1) {
         //as an empty line was read from input, empty line must be written to output.
         addNewLineToOutputAndTrace(streamHandle);
         break;
       }
 
+      numHeaders++;
       HeaderProcessingResponse headerProcessingResponse = this.headerProcessor.processHeader(sessionBuffer, numBytesRead, httpHeaderContext, requestContext);
       writeToOutputAndTrace(streamHandle, sessionBuffer, numBytesRead, headerProcessingResponse);
       addNewLineToOutputAndTrace(streamHandle);
     }
 
+    httpHeaderContext.setNumHeadersRead(numHeaders);
+    httpHeaderContext.setTotalNumberOfBytesReadForHeaders(totalBytesReadForHeaders);
     return httpHeaderContext;
+  }
+
+  private void setHttpVersion(byte[] sessionBuffer, int numBytesRead, RequestContext requestContext) {
+    String line = new String(sessionBuffer, 0, numBytesRead);
+    String parts[] = line.split(" ");
+    String lastPart = parts[parts.length-1];
+
+    if (StringUtils.equalsIgnoreCase(lastPart, "HTTP/1.1")) {
+      requestContext.setHttpVersion(HttpVersion.HTTP_1_1);
+    } else if (StringUtils.equalsIgnoreCase(lastPart, "HTTP/2")) {
+      requestContext.setHttpVersion(HttpVersion.HTTP_2);
+    }
+
+    log.trace("Http version is: {}", requestContext.getHttpVersion());
   }
 
   public void writeToOutputAndTrace(StreamHandle streamHandle,
@@ -194,12 +241,18 @@ public class HttpStreamerImpl implements IHttpStreamer {
         if (nextItem == '\n') {
           break;
         }
+
+        throw new RuntimeException("No LF After CR, Malformed Request");
       } else {
         sessionBuffer[index] = (byte)readItem;
         index++;
         readItem = inputStream.read();
       }
     }
+
+//    if (readItem == -1) {
+//      log.error("Nothing was read from the stream.");
+//    }
 
     return index;
   }

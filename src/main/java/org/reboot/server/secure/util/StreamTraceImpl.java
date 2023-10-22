@@ -1,15 +1,18 @@
 package org.reboot.server.secure.util;
 
+import org.reboot.server.secure.model.StreamType;
 import org.reboot.server.secure.model.TraceContext;
 import org.springframework.stereotype.Component;
+
+import java.io.OutputStream;
 
 @Component
 public class StreamTraceImpl implements IStreamTrace {
 
   private static byte[] START_BYTES = "=============================START=================================\r\n".getBytes();
-  private static byte[] PRE_MODIFIED = "\r\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n".getBytes();
-  private static byte[] MID_MODIFIED = "\r\n===================================================================\r\n".getBytes();
-  private static byte[] POST_MODIFIED = "\r\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\r\n".getBytes();
+//  private static byte[] PRE_MODIFIED = "\r\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n".getBytes();
+//  private static byte[] MID_MODIFIED = "\r\n===================================================================\r\n".getBytes();
+//  private static byte[] POST_MODIFIED = "\r\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\r\n".getBytes();
   private static byte[] END_BYTES = "=============================END=================================\r\n".getBytes();
   @Override
   public void start(TraceContext traceContext) throws Exception {
@@ -36,11 +39,14 @@ public class StreamTraceImpl implements IStreamTrace {
   public void addModifiedTrace(TraceContext traceContext, byte[] actual, int start, int limit, boolean isModified, byte[] modified) throws Exception {
     if (isEnabled(traceContext)) {
       if (isModified) {
-        traceContext.getOutputStream().write(PRE_MODIFIED);
-        traceContext.getOutputStream().write(actual, start, limit);
-        traceContext.getOutputStream().write(MID_MODIFIED);
-        traceContext.getOutputStream().write(modified);
-        traceContext.getOutputStream().write(POST_MODIFIED);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(new String(actual, start, limit))
+            .append(" >>>> ")
+            .append(new String(modified));
+
+        traceContext.getOutputStream().write(sb.toString().getBytes());
+
       } else {
         traceContext.getOutputStream().write(actual, start, limit);
       }
@@ -57,4 +63,17 @@ public class StreamTraceImpl implements IStreamTrace {
   private boolean isEnabled(TraceContext traceContext) throws Exception {
     return traceContext.getOutputStream() != null;
   }
+
+//  private OutputStream getStream(TraceContext traceContext) {
+//
+//    switch (traceContext.getStreamType()) {
+//      case REQUEST:
+//        return traceContext.getOutputStream();
+//
+//      case RESPONSE:
+//        return traceContext.getResponseStream();
+//    }
+//
+//    throw new RuntimeException("Unknown stream type: " + traceContext.getStreamType());
+//  }
 }
