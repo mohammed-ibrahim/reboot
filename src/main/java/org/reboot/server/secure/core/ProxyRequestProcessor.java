@@ -1,6 +1,5 @@
 package org.reboot.server.secure.core;
 
-import com.google.common.base.Stopwatch;
 import org.apache.commons.io.IOUtils;
 import org.reboot.server.secure.core.stream.IHttpStreamer;
 import org.reboot.server.secure.model.ConnectionState;
@@ -16,13 +15,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class ProxyRequestProcessor implements IProxyRequestProcessor {
 
-  private static final boolean REQUEST_STREAM = true;
-  private static final boolean RESPONSE_STREAM = false;
   private static Logger log = LoggerFactory.getLogger(ProxyRequestProcessor.class);
 
   private static final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -35,14 +31,11 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
 
   public void start(RequestContext requestContext, SessionHandle sessionHandle) throws Exception {
 
+    //Submit the request thread and proceed.
+    //Request thread will create new thread once the first http request was written successfully.
     executorService.submit(() -> {
       Thread.currentThread().setName(sessionHandle.getDestination().getConnectionId() + "-REQ");
       safeStreamForwardRequest(requestContext, sessionHandle);
-    });
-
-    executorService.submit(() -> {
-      Thread.currentThread().setName(sessionHandle.getDestination().getConnectionId() + "-RES");
-      safeStreamResponse(requestContext, sessionHandle);
     });
 
   }
@@ -51,13 +44,17 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
     sessionHandle.getSource().getSocket().close();
   }
 
+  public void cleanSession(SessionHandle sessionHandle) {
+    IOUtils.closeQuietly(sessionHandle.getSource().getSocket());
+    IOUtils.closeQuietly(sessionHandle.getDestination().getSocket());
+  }
+
   private void safeStreamForwardRequest(RequestContext requestContext, SessionHandle sessionHandle) {
     try {
       streamForwardRequest(requestContext, sessionHandle);
     } catch (Exception e) {
       log.error("Error while forwarding: ", e);
-      IOUtils.closeQuietly(sessionHandle.getSource().getSocket());
-      IOUtils.closeQuietly(sessionHandle.getDestination().getSocket());
+      cleanSession(sessionHandle);
     }
   }
 
@@ -68,11 +65,24 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
         sessionHandle.getRequestTraceContext(), StreamType.REQUEST);
 
     int numRequests = 0;
-//    StreamResponse streamResponse = null;
+    boolean responseThreadInitiated = false;
     while (true) {
       StreamResponse streamResponse = httpStreamer.stream(requestContext, streamHandle);
+
+      if (!responseThreadInitiated) {
+        submitResponseStreamHandlerThread(requestContext, sessionHandle);
+        responseThreadInitiated = true;
+      }
+
       log.info("Total REQ: {}, bytes: {}", ++numRequests, (streamResponse.getNumHeaderBytes() + streamResponse.getNumBodyBytes()));
     }
+  }
+
+  private void submitResponseStreamHandlerThread(RequestContext requestContext, SessionHandle sessionHandle) {
+    executorService.submit(() -> {
+      Thread.currentThread().setName(sessionHandle.getDestination().getConnectionId() + "-RES");
+      safeStreamResponse(requestContext, sessionHandle);
+    });
   }
 
 
@@ -81,8 +91,7 @@ public class ProxyRequestProcessor implements IProxyRequestProcessor {
       streamResponse(requestContext, sessionHandle);
     } catch (Exception e) {
       log.error("Error while responding: ", e);
-      IOUtils.closeQuietly(sessionHandle.getSource().getSocket());
-      IOUtils.closeQuietly(sessionHandle.getDestination().getSocket());
+      cleanSession(sessionHandle);
     }
   }
 
