@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
+@Deprecated
 public class DefaultDestinationServerSocketProvider implements IDestinationServerSocketProvider {
 
   private static Logger log = LoggerFactory.getLogger(DefaultDestinationServerSocketProvider.class);
@@ -50,6 +51,9 @@ public class DefaultDestinationServerSocketProvider implements IDestinationServe
   }
 
   private ManagedSocket getDestSocket(String host, int port) throws Exception {
+    if ("a".equalsIgnoreCase("a")) {
+      throw new RuntimeException("Deprecated do not use, use PlainDestinationServerSocketProvider instead.");
+    }
     String key = getKey(host, port);
     synchronized (lock) {
       if (this.socketMap.containsKey(key)) {
