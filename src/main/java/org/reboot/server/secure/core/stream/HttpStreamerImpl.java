@@ -1,10 +1,8 @@
 package org.reboot.server.secure.core.stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.reboot.server.secure.model.ConnectionState;
 import org.reboot.server.secure.model.HeaderProcessingResponse;
 import org.reboot.server.secure.model.HttpHeaderContext;
-import org.reboot.server.secure.model.HttpVersion;
 import org.reboot.server.secure.model.RequestContext;
 import org.reboot.server.secure.model.StreamHandle;
 import org.reboot.server.secure.model.StreamResponse;
@@ -161,13 +159,15 @@ public class HttpStreamerImpl implements IHttpStreamer {
     int totalBytesReadForHeaders = 0;
 
     while (true) {
-//      byte[] data = readLineBytes(streamHandle.getInputStream(), sessionBuffer);
       int numBytesRead = readLineToSessionBuffer(streamHandle.getInputStream(), sessionBuffer);
       totalBytesReadForHeaders += numBytesRead + 2; // (+2 is for extra CRLF)
 
+      /*
+      No Longer Required. No difference for LB if http1 or http1.1
       if (StreamType.REQUEST.equals(streamHandle.getStreamType()) && requestContext.getHttpVersion() == null) {
         setHttpVersion(sessionBuffer, numBytesRead, requestContext);
       }
+      */
 
       log.trace("Read line: {}", new String(sessionBuffer, 0, numBytesRead));
       if (numBytesRead < 1) {
@@ -187,19 +187,19 @@ public class HttpStreamerImpl implements IHttpStreamer {
     return httpHeaderContext;
   }
 
-  private void setHttpVersion(byte[] sessionBuffer, int numBytesRead, RequestContext requestContext) {
-    String line = new String(sessionBuffer, 0, numBytesRead);
-    String parts[] = line.split(" ");
-    String lastPart = parts[parts.length-1];
-
-    if (StringUtils.equalsIgnoreCase(lastPart, "HTTP/1.1")) {
-      requestContext.setHttpVersion(HttpVersion.HTTP_1_1);
-    } else if (StringUtils.equalsIgnoreCase(lastPart, "HTTP/2")) {
-      requestContext.setHttpVersion(HttpVersion.HTTP_2);
-    }
-
-    log.trace("Http version is: {}", requestContext.getHttpVersion());
-  }
+//  private void setHttpVersion(byte[] sessionBuffer, int numBytesRead, RequestContext requestContext) {
+//    String line = new String(sessionBuffer, 0, numBytesRead);
+//    String parts[] = line.split(" ");
+//    String lastPart = parts[parts.length-1];
+//
+//    if (StringUtils.equalsIgnoreCase(lastPart, "HTTP/1.1")) {
+//      requestContext.setHttpVersion(HttpVersion.HTTP_1_1);
+//    } else if (StringUtils.equalsIgnoreCase(lastPart, "HTTP/2")) {
+//      requestContext.setHttpVersion(HttpVersion.HTTP_2);
+//    }
+//
+//    log.trace("Http version is: {}", requestContext.getHttpVersion());
+//  }
 
   public void writeToOutputAndTrace(StreamHandle streamHandle,
                                     byte[] sessionBuffer,
