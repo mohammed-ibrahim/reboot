@@ -18,9 +18,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Service;
 
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSocket;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Paths;
@@ -84,6 +87,7 @@ public class SockMain {
   }
 
   private void processRequestAndSendResponse(Socket socket) throws Exception {
+    performHandShake((SSLSocket) socket);
     ManagedSocket managedSocket = destinationServerSocketProvider.getDestinationSocket();
     RequestContext requestContext = new RequestContext();
     requestContext.setDestinationHostName(managedSocket.getHost());
@@ -92,6 +96,17 @@ public class SockMain {
     Pair<TraceContext, TraceContext> traceContextPair = getTraceContext(managedSocket);
     SessionHandle sessionHandle = new SessionHandle(new InboundSocket(socket), managedSocket, traceContextPair.getLeft(), traceContextPair.getRight());
     proxyRequestProcessor.start(requestContext, sessionHandle);
+  }
+
+  private static void performHandShake(SSLSocket socket) throws IOException {
+    SSLSocket sslSocket = socket;
+    SSLParameters sslParameters = sslSocket.getSSLParameters();
+    String[] serverAPs ={ "http/1.1", "two", "three" };
+    sslParameters.setApplicationProtocols(serverAPs);
+    sslSocket.setSSLParameters(sslParameters);
+    sslSocket.startHandshake();
+    String ap = sslSocket.getApplicationProtocol();
+    log.debug("Handshake successfull, with protocol agreed upon: {}", ap);
   }
 
   private Pair<TraceContext, TraceContext> getTraceContext(ManagedSocket managedSocket) throws Exception {

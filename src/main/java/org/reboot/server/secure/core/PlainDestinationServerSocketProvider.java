@@ -12,10 +12,12 @@ import org.springframework.stereotype.Service;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.net.Socket;
+import java.util.Optional;
 
 @Service("plainDestinationServerSocketProvider")
 public class PlainDestinationServerSocketProvider implements IDestinationServerSocketProvider {
 
+  public static final String DEST_SERVER_PORT = "dest.server.port";
   private static Logger log = LoggerFactory.getLogger(PlainDestinationServerSocketProvider.class);
   private static final SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 
@@ -39,7 +41,11 @@ public class PlainDestinationServerSocketProvider implements IDestinationServerS
   @Override
   public ManagedSocket getDestinationSocket() throws Exception {
     String host = serverConfiguration.getRequiredProperty(DEST_SERVER_HOST);
-    Pair<String, SSLSocket> newConnection = connectionFactory.getNewConnection(host, port);
+    Optional<Integer> propertyAsInteger = serverConfiguration.getPropertyAsInteger(DEST_SERVER_PORT);
+    log.debug("Got host: {} is port mentioned: {} port: {} from config",
+        host, propertyAsInteger.isPresent(), propertyAsInteger.orElse(443));
+
+    Pair<String, SSLSocket> newConnection = connectionFactory.getNewConnection(host, propertyAsInteger.orElse(443));
     log.info("Creating new connection with id: {}", newConnection.getLeft());
     ManagedSocket managedSocket = new ManagedSocket(newConnection.getLeft(), newConnection.getRight(), host, port, SocketState.IN_USE);
     return managedSocket;
