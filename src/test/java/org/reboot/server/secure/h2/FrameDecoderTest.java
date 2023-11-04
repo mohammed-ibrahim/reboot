@@ -1,11 +1,11 @@
 package org.reboot.server.secure.h2;
 
 import org.reboot.server.secure.model.FrameDetails;
+import org.reboot.server.secure.model.FrameType;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.nio.ByteBuffer;
 import java.util.Base64;
 
 import static org.testng.Assert.*;
@@ -19,20 +19,23 @@ public class FrameDecoderTest {
   }
 
   @Test
-  public void canDetermineFrameLength() {
+  public void canDetermineFrameDetails() {
     String inputB64Data = "AAAuAQUAAAABgodBiqDkHROdCbjwHg+EeogltlDDy4Vxf1MDKi8qQIIcZANkZWZAggiZAzQ1Ng==";
     int expectedLength = 46;
 
     FrameDetails frameDetails = frameDecoder.getFrameDetails(Base64.getDecoder().decode(inputB64Data));
     assertEquals(frameDetails.getFrameLength(), expectedLength);
+    assertEquals(frameDetails.getFrameType(), FrameType.HEADERS);
+    assertEquals(frameDetails.getStreamId(), 1);
 
     inputB64Data = "AABWAQQAAAABg4dBiqDkHROdCbjwHg8El2KxpnirHYmILFY0zxVjsTEL/K7CpT6/eogltlDDy4Vxf1MDKi8qDw0DNTg5X5gdddBiDSY9THlbx48LSnspWtsoLUQ8hZM=";
     expectedLength = 86;
 
     frameDetails = frameDecoder.getFrameDetails(Base64.getDecoder().decode(inputB64Data));
     assertEquals(frameDetails.getFrameLength(), expectedLength);
+    assertEquals(frameDetails.getFrameType(), FrameType.HEADERS);
+    assertEquals(frameDetails.getStreamId(), 1);
   }
-
 
   @DataProvider(name = "getDataSetForLengthCalculation")
   protected Object[][] getDataSetForLengthCalculation() {

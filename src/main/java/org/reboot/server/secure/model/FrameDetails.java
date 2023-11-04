@@ -6,6 +6,8 @@ public class FrameDetails {
 
   private int frameLength;
 
+  private int streamId;
+
   public FrameType getFrameType() {
     return frameType;
   }
@@ -20,5 +22,13 @@ public class FrameDetails {
 
   public void setFrameLength(int frameLength) {
     this.frameLength = frameLength;
+  }
+
+  public int getStreamId() {
+    return streamId;
+  }
+
+  public void setStreamId(int streamId) {
+    this.streamId = streamId;
   }
 }

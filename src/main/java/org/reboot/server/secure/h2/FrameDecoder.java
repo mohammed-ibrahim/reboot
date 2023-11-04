@@ -13,6 +13,8 @@ public class FrameDecoder {
     int streamIdentifier = getStreamIdentifier(data);
     FrameDetails frameDetails = new FrameDetails();
     frameDetails.setFrameLength(packetLength);
+    frameDetails.setFrameType(frameType);
+    frameDetails.setStreamId(streamIdentifier);
     return frameDetails;
   }
 
