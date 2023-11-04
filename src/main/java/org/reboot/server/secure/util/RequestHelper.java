@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,9 +90,9 @@ public class RequestHelper {
     proxyRequestProcessor.start(requestContext, sessionHandle);
   }
 
-  private Optional<HttpVersion> performHandShake(SSLSocket socket) throws IOException {
+  private Optional<HttpVersion> performHandShake(SSLSocket sslSocket) throws IOException {
     try {
-      SSLSocket sslSocket = socket;
+//      SSLSocket sslSocket = socket;
       SSLParameters sslParameters = sslSocket.getSSLParameters();
 
       List<String> serverSupportedALPN = new ArrayList<>();
@@ -124,7 +125,7 @@ public class RequestHelper {
       return Optional.empty();
     } catch (Exception e) {
       log.error("There was a problem while handshake.", e);
-      IOUtils.closeQuietly(socket);
+      IOUtils.closeQuietly(sslSocket);
       return Optional.empty();
     }
   }
@@ -149,10 +150,26 @@ public class RequestHelper {
   }
 
   private void initiateHttp2ProxyRequest(Socket socket) throws Exception {
-    byte[] buffer = new byte[1024*8];
-    int read = socket.getInputStream().read(buffer, 0, buffer.length);
-    log.info("Obtained packet: {}, number of bytes read: {}", new String(buffer, 0, read), read);
-    char[] hexChar = Hex.encodeHex(buffer, 0, read, true);
-    log.info("Hex char: [{}]", hexChar);
+    run(socket);
+  }
+
+  private void run(Socket socket) {
+    try {
+      byte[] buffer = new byte[1024*16];
+      for (int i=0; i<3; i++) {
+        log.info("Reading round: {}", i);
+        int read = socket.getInputStream().read(buffer, 0, buffer.length);
+        byte[] newbuffer = new byte[read];
+        System.arraycopy(buffer, 0, newbuffer, 0, read);
+        String b46String = new String(Base64.getEncoder().encode(newbuffer));
+        log.info("Round: {} Number of bytes read: [{}] base64: [{}]", i,  read, b46String);
+        char[] hexChar = Hex.encodeHex(buffer, 0, read, true);
+        log.info("Round: {} Hex char: [{}]", i, new String(hexChar));
+      }
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
   }
 }
